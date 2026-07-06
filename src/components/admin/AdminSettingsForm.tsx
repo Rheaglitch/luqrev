@@ -88,11 +88,20 @@ export default function AdminSettingsForm({ settings, action }: Props) {
       {/* Header template */}
       <section className="bg-white rounded-2xl p-5 border border-rose-100 space-y-4">
         <h2 className="font-medium text-rose-700">Header</h2>
-        {field('header_quote', 'Quote / label bawah (contoh: My love)', 'text', 'My love')}
-        {field('header_sub',   'Sub label (contoh: Soulmate)', 'text', 'Soulmate')}
-        {field('header_photo_url', 'URL foto header (dari Supabase Storage)', 'url', 'https://...')}
+        {field('header_title',        'Judul (contoh: Best Couple)',    'text', 'Best Couple')}
+        {field('header_quote_bottom', 'Quote bawah',                   'text', 'Two people who met because of fate...')}
+        <div className="border-t border-rose-100 pt-3 space-y-3">
+          <p className="text-xs font-medium text-rose-500">Foto kiri (kolase bertumpuk)</p>
+          {field('header_photo_left1',  'URL Foto kiri atas',  'url', 'https://...')}
+          {field('header_photo_left2',  'URL Foto kiri bawah', 'url', 'https://...')}
+        </div>
+        <div className="border-t border-rose-100 pt-3 space-y-3">
+          <p className="text-xs font-medium text-rose-500">Foto kanan (polaroid per orang)</p>
+          {field('header_photo_right1', `URL Foto ${settings.partner1_name ?? 'Orang 1'}`, 'url', 'https://...')}
+          {field('header_photo_right2', `URL Foto ${settings.partner2_name ?? 'Orang 2'}`, 'url', 'https://...')}
+        </div>
         <p className="text-xs text-rose-300">
-          Upload foto dulu ke Supabase Storage → folder &quot;header&quot;, lalu copy public URL-nya ke sini.
+          Upload foto ke Supabase Storage → copy public URL → paste di sini.
         </p>
       </section>
 

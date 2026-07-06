@@ -29,9 +29,15 @@ insert into love_settings (key, value) values
   ('theme_event_pink_label',  'Hari Spesial'),
   ('theme_event_pink_desc',   ''),
   -- Header template
-  ('header_quote',            'My love'),
-  ('header_sub',              'Soulmate'),
-  ('header_photo_url',        '')
+  ('header_title',          'Best Couple'),
+  ('header_quote_bottom',   'Two people who met because of fate, I hope we will always be together'),
+  ('header_photo_left1',    ''),
+  ('header_photo_left2',    ''),
+  ('header_photo_right1',   ''),
+  ('header_photo_right2',   ''),
+  ('header_quote',          'My love'),
+  ('header_sub',            'Soulmate'),
+  ('header_photo_url',      '')
 on conflict (key) do nothing;
 
 -- 2. Slideshow

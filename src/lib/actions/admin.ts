@@ -37,6 +37,9 @@ export async function updateSettings(_prevState: { success?: boolean } | undefin
     'theme_event_red_date',   'theme_event_red_label',   'theme_event_red_desc',
     'theme_event_pink_date',  'theme_event_pink_label',  'theme_event_pink_desc',
     'header_quote', 'header_sub', 'header_photo_url',
+    'header_title', 'header_quote_bottom',
+    'header_photo_left1', 'header_photo_left2',
+    'header_photo_right1', 'header_photo_right2',
   ]
 
   for (const key of updates) {
