@@ -33,6 +33,9 @@ export async function updateSettings(_prevState: { success?: boolean } | undefin
   const updates = [
     'gate_password', 'partner1_name', 'partner2_name',
     'relationship_start', 'next_event_date', 'next_event_label',
+    'theme_event_blue_date',  'theme_event_blue_label',  'theme_event_blue_desc',
+    'theme_event_red_date',   'theme_event_red_label',   'theme_event_red_desc',
+    'theme_event_pink_date',  'theme_event_pink_label',  'theme_event_pink_desc',
   ]
 
   for (const key of updates) {

@@ -25,13 +25,54 @@ export default function AdminSettingsForm({ settings, action }: Props) {
     </div>
   )
 
+  const themeSection = (
+    color: 'blue' | 'red' | 'pink',
+    label: string,
+    emoji: string,
+    colorClass: string
+  ) => (
+    <div className={`rounded-2xl p-4 border-2 ${colorClass} space-y-3`}>
+      <h3 className="font-medium text-sm">{emoji} Tema {label}</h3>
+      <div>
+        <label className="block text-xs opacity-60 mb-1">Tanggal (MM-DD, contoh: 3-15 untuk 15 Maret)</label>
+        <input
+          type="text"
+          name={`theme_event_${color}_date`}
+          defaultValue={settings[`theme_event_${color}_date`] ?? ''}
+          placeholder="contoh: 3-15"
+          className="w-full px-3 py-2 rounded-xl border bg-white/80 focus:outline-none focus:ring-2 text-sm"
+        />
+      </div>
+      <div>
+        <label className="block text-xs opacity-60 mb-1">Nama event</label>
+        <input
+          type="text"
+          name={`theme_event_${color}_label`}
+          defaultValue={settings[`theme_event_${color}_label`] ?? ''}
+          placeholder="contoh: Anniversary"
+          className="w-full px-3 py-2 rounded-xl border bg-white/80 focus:outline-none focus:ring-2 text-sm"
+        />
+      </div>
+      <div>
+        <label className="block text-xs opacity-60 mb-1">Deskripsi (opsional)</label>
+        <input
+          type="text"
+          name={`theme_event_${color}_desc`}
+          defaultValue={settings[`theme_event_${color}_desc`] ?? ''}
+          placeholder="keterangan singkat..."
+          className="w-full px-3 py-2 rounded-xl border bg-white/80 focus:outline-none focus:ring-2 text-sm"
+        />
+      </div>
+    </div>
+  )
+
   return (
     <form action={formAction} className="space-y-6">
       {/* Password gate */}
       <section className="bg-white rounded-2xl p-5 border border-rose-100 space-y-4">
         <h2 className="font-medium text-rose-700">Sandi Pintu Masuk</h2>
-        {field('gate_password', 'Sandi (teks biasa)', 'text', 'Contoh: sayangku123')}
-        <p className="text-xs text-rose-300">Sandi ini yang harus dimasukkan pengunjung untuk mengakses web.</p>
+        {field('gate_password', 'Sandi (angka 6 digit)', 'text', 'contoh: 150326')}
+        <p className="text-xs text-rose-300">Pengunjung akan mengetik angka ini di numpad.</p>
       </section>
 
       {/* Names & dates */}
@@ -42,6 +83,17 @@ export default function AdminSettingsForm({ settings, action }: Props) {
         {field('relationship_start', 'Tanggal Mulai Pacaran', 'date')}
         {field('next_event_date', 'Tanggal Event Berikutnya', 'date')}
         {field('next_event_label', 'Label Event (contoh: Ultah kamu 🎂)', 'text', 'Ultah kamu')}
+      </section>
+
+      {/* Theme events */}
+      <section className="bg-white rounded-2xl p-5 border border-rose-100 space-y-4">
+        <h2 className="font-medium text-rose-700">Tema Warna</h2>
+        <p className="text-xs text-rose-400">
+          Web akan otomatis ganti warna sesuai event yang paling dekat dengan hari ini.
+        </p>
+        {themeSection('blue',  'Biru',  '💙', 'border-blue-200 text-blue-700')}
+        {themeSection('red',   'Merah', '❤️', 'border-red-200 text-red-700')}
+        {themeSection('pink',  'Pink',  '🩷', 'border-pink-200 text-pink-700')}
       </section>
 
       {state?.success && (

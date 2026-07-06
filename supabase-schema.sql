@@ -12,12 +12,22 @@ create table if not exists love_settings (
 
 -- Seed default values
 insert into love_settings (key, value) values
-  ('gate_password',      'sayang'),
-  ('partner1_name',      'Kamu'),
-  ('partner2_name',      'Aku'),
-  ('relationship_start', '2024-01-01'),
-  ('next_event_date',    '2025-01-01'),
-  ('next_event_label',   'Anniversary 🎉')
+  ('gate_password',           '150326'),
+  ('partner1_name',           'Kamu'),
+  ('partner2_name',           'Aku'),
+  ('relationship_start',      '2024-01-01'),
+  ('next_event_date',         '2025-03-15'),
+  ('next_event_label',        'Anniversary 🎉'),
+  -- Tema warna: format MM-DD
+  ('theme_event_blue_date',   '3-15'),
+  ('theme_event_blue_label',  'Anniversary'),
+  ('theme_event_blue_desc',   ''),
+  ('theme_event_red_date',    '10-4'),
+  ('theme_event_red_label',   'Hari Spesial'),
+  ('theme_event_red_desc',    ''),
+  ('theme_event_pink_date',   '8-3'),
+  ('theme_event_pink_label',  'Hari Spesial'),
+  ('theme_event_pink_desc',   '')
 on conflict (key) do nothing;
 
 -- 2. Slideshow

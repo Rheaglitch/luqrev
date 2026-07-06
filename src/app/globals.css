@@ -43,3 +43,12 @@ h1, h2, h3, .font-playfair {
   transform: translateY(0);
   transition: opacity 400ms ease, transform 400ms ease;
 }
+
+/* Shake animation for wrong PIN */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-8px); }
+  40%       { transform: translateX(8px); }
+  60%       { transform: translateX(-6px); }
+  80%       { transform: translateX(6px); }
+}
