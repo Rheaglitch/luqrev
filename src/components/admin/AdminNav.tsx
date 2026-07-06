@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Settings, Image as ImageIcon, BookOpen, Grid3X3,
-  Calendar, Gamepad2, Mail, LogOut, Heart,
+  Calendar, Mail, LogOut, Heart,
 } from 'lucide-react'
 
 const links = [
@@ -13,7 +13,6 @@ const links = [
   { href: '/reva-admin/gallery', label: 'Galeri', icon: Grid3X3 },
   { href: '/reva-admin/scrapbook', label: 'Scrapbook', icon: BookOpen },
   { href: '/reva-admin/events', label: 'Momen', icon: Calendar },
-  { href: '/reva-admin/game', label: 'Game', icon: Gamepad2 },
   { href: '/reva-admin/letters', label: 'Surat', icon: Mail },
 ]
 

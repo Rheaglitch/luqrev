@@ -27,7 +27,11 @@ insert into love_settings (key, value) values
   ('theme_event_red_desc',    ''),
   ('theme_event_pink_date',   '8-3'),
   ('theme_event_pink_label',  'Hari Spesial'),
-  ('theme_event_pink_desc',   '')
+  ('theme_event_pink_desc',   ''),
+  -- Header template
+  ('header_quote',            'My love'),
+  ('header_sub',              'Soulmate'),
+  ('header_photo_url',        '')
 on conflict (key) do nothing;
 
 -- 2. Slideshow

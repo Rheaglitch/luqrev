@@ -85,6 +85,17 @@ export default function AdminSettingsForm({ settings, action }: Props) {
         {field('next_event_label', 'Label Event (contoh: Ultah kamu 🎂)', 'text', 'Ultah kamu')}
       </section>
 
+      {/* Header template */}
+      <section className="bg-white rounded-2xl p-5 border border-rose-100 space-y-4">
+        <h2 className="font-medium text-rose-700">Header</h2>
+        {field('header_quote', 'Quote / label bawah (contoh: My love)', 'text', 'My love')}
+        {field('header_sub',   'Sub label (contoh: Soulmate)', 'text', 'Soulmate')}
+        {field('header_photo_url', 'URL foto header (dari Supabase Storage)', 'url', 'https://...')}
+        <p className="text-xs text-rose-300">
+          Upload foto dulu ke Supabase Storage → folder &quot;header&quot;, lalu copy public URL-nya ke sini.
+        </p>
+      </section>
+
       {/* Theme events */}
       <section className="bg-white rounded-2xl p-5 border border-rose-100 space-y-4">
         <h2 className="font-medium text-rose-700">Tema Warna</h2>
