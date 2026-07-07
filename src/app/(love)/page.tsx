@@ -40,10 +40,11 @@ export default async function HomePage() {
     <div className="pb-8">
 
       {/* ── Section 1: Slideshow + Momen ── */}
-      <section className="flex gap-0 w-full" style={{ height: '50vh', minHeight: 280 }}>
+      {/* Slideshow pakai aspect-video (16:9) supaya foto tidak terpotong */}
+      <section className="flex gap-0 w-full">
 
-        {/* Slideshow — 65% */}
-        <div className="relative flex-1 min-w-0">
+        {/* Slideshow — 65% lebar, tinggi mengikuti aspek rasio */}
+        <div className="relative min-w-0" style={{ width: '65%', aspectRatio: '16/9' }}>
           {slides.length > 0 ? (
             <Slideshow slides={slides} />
           ) : (
@@ -53,22 +54,19 @@ export default async function HomePage() {
           )}
         </div>
 
-        {/* Momen — 35% */}
+        {/* Momen — 35% lebar, tinggi mengikuti slideshow */}
         <div
-          className="flex-shrink-0 flex flex-col overflow-hidden"
-          style={{
-            width: '35%',
-            background: 'linear-gradient(180deg, #2a0808 0%, #3d0c0c 100%)',
-          }}
+          className="flex-1 flex flex-col overflow-hidden"
+          style={{ background: 'linear-gradient(180deg, #2a0808 0%, #3d0c0c 100%)' }}
         >
-          <div className="px-4 pt-4 pb-2 flex items-center justify-between flex-shrink-0">
-            <h2 className="font-playfair text-sm font-bold text-white">Momen Spesial</h2>
-            <Link href="/events" className="text-[10px] text-[rgba(255,200,200,0.6)] hover:text-white transition-colors flex items-center gap-0.5">
-              Semua <ChevronRight className="w-3 h-3" />
+          <div className="px-5 pt-5 pb-2 flex items-center justify-between flex-shrink-0">
+            <h2 className="font-playfair text-base font-bold text-white">Momen Spesial</h2>
+            <Link href="/events" className="text-xs text-[rgba(255,200,200,0.6)] hover:text-white transition-colors flex items-center gap-0.5">
+              Semua <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-2 scrollbar-none">
+          <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2.5 scrollbar-none">
             {upcomingEvents.length === 0 && pastEvents.length === 0 ? (
               <p className="text-xs text-center py-4" style={{ color: 'rgba(255,180,180,0.4)' }}>
                 Belum ada momen~
@@ -76,24 +74,24 @@ export default async function HomePage() {
             ) : (
               <>
                 {upcomingEvents.map(event => (
-                  <div key={event.id} className="rounded-xl px-3 py-2.5 flex items-start gap-2"
+                  <div key={event.id} className="rounded-xl px-4 py-3 flex items-start gap-2.5"
                     style={{ background: 'rgba(255,255,255,0.07)' }}>
-                    <Calendar className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: 'rgba(255,180,180,0.7)' }} />
+                    <Calendar className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: 'rgba(255,180,180,0.7)' }} />
                     <div className="min-w-0">
-                      <p className="text-xs font-medium truncate" style={{ color: 'white' }}>{event.title}</p>
-                      <p className="text-[10px]" style={{ color: 'rgba(255,180,180,0.6)' }}>
+                      <p className="text-sm font-medium truncate" style={{ color: 'white' }}>{event.title}</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'rgba(255,180,180,0.6)' }}>
                         {getDaysTo(event.event_date) === 0 ? 'Hari ini! 🎉' : `${getDaysTo(event.event_date)} hari lagi`}
                       </p>
                     </div>
                   </div>
                 ))}
                 {pastEvents.map(event => (
-                  <div key={event.id} className="rounded-xl px-3 py-2 flex items-start gap-2 opacity-50"
+                  <div key={event.id} className="rounded-xl px-4 py-2.5 flex items-start gap-2.5 opacity-60"
                     style={{ background: 'rgba(255,255,255,0.04)' }}>
-                    <Heart className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: 'rgba(255,180,180,0.5)' }} />
+                    <Heart className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: 'rgba(255,180,180,0.5)' }} />
                     <div className="min-w-0">
-                      <p className="text-[11px] truncate" style={{ color: 'rgba(255,255,255,0.7)' }}>{event.title}</p>
-                      <p className="text-[9px]" style={{ color: 'rgba(255,180,180,0.4)' }}>{formatDate(event.event_date)}</p>
+                      <p className="text-sm truncate" style={{ color: 'rgba(255,255,255,0.75)' }}>{event.title}</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'rgba(255,180,180,0.45)' }}>{formatDate(event.event_date)}</p>
                     </div>
                   </div>
                 ))}
