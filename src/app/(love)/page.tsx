@@ -221,36 +221,32 @@ export default async function HomePage() {
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          {/* TicTacToe */}
-          <Link href="/game">
-            <div className="rounded-2xl overflow-hidden shadow-sm aspect-square flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] transition-transform"
-              style={{ background: 'linear-gradient(135deg, #3d0c0c, #6b2020)' }}>
-              <div className="grid grid-cols-3 gap-0.5">
-                {['♥','','○','','♥','','○','','♥'].map((c, i) => (
-                  <div key={i} className="w-4 h-4 rounded-sm flex items-center justify-center text-[8px] font-bold"
-                    style={{ background: 'rgba(255,255,255,0.1)', color: c === '♥' ? '#ffb3b3' : '#b3d4ff' }}>
-                    {c}
+          {[
+            { label: 'Tic-Tac-Toe', emoji: null, grid: ['♥','','○','','♥','','○','','♥'], bg: 'linear-gradient(135deg, #3d0c0c, #6b2020)' },
+            { label: 'Ular Tangga', emoji: '🐍', grid: null, bg: 'linear-gradient(135deg, #6b2020, #8b4040)' },
+            { label: 'Catur',       emoji: '♟', grid: null, bg: 'linear-gradient(135deg, #2a0808, #4a1a10)' },
+          ].map(g => (
+            <Link key={g.label} href="/game">
+              <div className="rounded-2xl overflow-hidden shadow-sm aspect-square flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] transition-transform"
+                style={{ background: g.bg }}>
+                {g.grid ? (
+                  <div className="grid grid-cols-3 gap-0.5">
+                    {g.grid.map((c, i) => (
+                      <div key={i} className="w-3.5 h-3.5 rounded-sm flex items-center justify-center text-[7px] font-bold"
+                        style={{ background: 'rgba(255,255,255,0.1)', color: c === '♥' ? '#ffb3b3' : '#b3d4ff' }}>
+                        {c}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <span className="text-2xl">{g.emoji}</span>
+                )}
+                <p className="text-white text-[10px] font-medium px-1 text-center">{g.label}</p>
               </div>
-              <p className="text-white text-[10px] font-medium">Tic-Tac-Toe</p>
-            </div>
-          </Link>
-
-          {/* Coming soon 1 */}
-          <div className="rounded-2xl aspect-square flex flex-col items-center justify-center gap-2 border-2 border-dashed border-[#c9a0a0]/40">
-            <span className="text-xl">🎲</span>
-            <p className="text-[10px] text-[#c9a0a0]">Coming soon</p>
-          </div>
-
-          {/* Coming soon 2 */}
-          <div className="rounded-2xl aspect-square flex flex-col items-center justify-center gap-2 border-2 border-dashed border-[#c9a0a0]/40">
-            <span className="text-xl">🧩</span>
-            <p className="text-[10px] text-[#c9a0a0]">Coming soon</p>
-          </div>
+            </Link>
+          ))}
         </div>
       </section>
-
     </div>
   )
 }

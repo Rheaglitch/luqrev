@@ -107,8 +107,37 @@ create table if not exists love_quiz (
   created_at timestamptz default now()
 );
 
--- ============================================================
--- RLS (Row Level Security)
+-- 9. Truth or Dare questions
+create table if not exists love_truth_dare (
+  id         uuid primary key default gen_random_uuid(),
+  type       text not null check (type in ('truth', 'dare')),
+  content    text not null,
+  created_at timestamptz default now()
+);
+
+-- Seed some default questions
+insert into love_truth_dare (type, content) values
+  ('truth', 'Apa hal paling konyol yang pernah kamu lakukan untukku?'),
+  ('truth', 'Apa momen favoritmu bersama aku?'),
+  ('truth', 'Apa yang pertama kali kamu pikirkan waktu pertama kali ketemu aku?'),
+  ('truth', 'Apa yang paling kamu suka dari aku?'),
+  ('truth', 'Kalau bisa mengulang satu momen kita, momen apa yang kamu pilih?'),
+  ('truth', 'Apa hal yang belum pernah kamu ceritakan ke aku?'),
+  ('truth', 'Sebutkan 3 kata yang menggambarkan perasaanmu tentang aku!'),
+  ('truth', 'Apa mimpimu yang melibatkan kita berdua?'),
+  ('dare', 'Peluk aku selama 10 detik!'),
+  ('dare', 'Nyanyikan lagu favorit kita untuk aku!'),
+  ('dare', 'Tulis kata "I love you" di tanganku pakai jarimu!'),
+  ('dare', 'Kasih aku pujian yang tulus selama 30 detik!'),
+  ('dare', 'Ceritakan ulang momen pertama kita ketemu dengan dramatis!'),
+  ('dare', 'Buat aku tertawa dalam 30 detik!'),
+  ('dare', 'Bisikkan sesuatu yang romantis ke telingaku!'),
+  ('dare', 'Gambarkan wajahku di kertas dalam 1 menit!');
+
+-- RLS
+alter table love_truth_dare enable row level security;
+create policy "public read truth_dare" on love_truth_dare for select using (true);
+create policy "admin write truth_dare" on love_truth_dare for all using (auth.role() = 'authenticated');
 -- Aktifkan RLS agar data hanya bisa diakses via API yang sah
 -- ============================================================
 
