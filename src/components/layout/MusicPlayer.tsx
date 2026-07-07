@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
-import { Play, Pause, SkipBack, SkipForward, Volume2 } from 'lucide-react'
+import { Play, Pause, SkipBack, SkipForward } from 'lucide-react'
 
 interface Props {
   title: string
@@ -17,26 +17,22 @@ export default function MusicPlayer({ title, artist, audioUrl, coverUrl, accent 
   const [playing, setPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
-  const [volume, setVolume] = useState(0.8)
 
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
-    audio.volume = volume
-
-    const onTimeUpdate = () => setProgress(audio.currentTime)
-    const onDurationChange = () => setDuration(audio.duration || 0)
-    const onEnded = () => setPlaying(false)
-
-    audio.addEventListener('timeupdate', onTimeUpdate)
-    audio.addEventListener('durationchange', onDurationChange)
+    const onTime    = () => setProgress(audio.currentTime)
+    const onDur     = () => setDuration(audio.duration || 0)
+    const onEnded   = () => setPlaying(false)
+    audio.addEventListener('timeupdate', onTime)
+    audio.addEventListener('durationchange', onDur)
     audio.addEventListener('ended', onEnded)
     return () => {
-      audio.removeEventListener('timeupdate', onTimeUpdate)
-      audio.removeEventListener('durationchange', onDurationChange)
+      audio.removeEventListener('timeupdate', onTime)
+      audio.removeEventListener('durationchange', onDur)
       audio.removeEventListener('ended', onEnded)
     }
-  }, [volume])
+  }, [])
 
   const togglePlay = () => {
     const audio = audioRef.current
@@ -52,98 +48,104 @@ export default function MusicPlayer({ title, artist, audioUrl, coverUrl, accent 
     setProgress(Number(e.target.value))
   }
 
-  const changeVolume = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = Number(e.target.value)
-    setVolume(v)
-    if (audioRef.current) audioRef.current.volume = v
-  }
-
   const fmt = (s: number) => {
     if (!s || isNaN(s)) return '0:00'
-    const m = Math.floor(s / 60)
-    const sec = Math.floor(s % 60)
-    return `${m}:${sec.toString().padStart(2, '0')}`
+    return `${Math.floor(s / 60)}:${Math.floor(s % 60).toString().padStart(2, '0')}`
   }
 
-  const progressPct = duration > 0 ? (progress / duration) * 100 : 0
+  const pct = duration > 0 ? (progress / duration) * 100 : 0
 
   return (
     <div
-      className="mx-6 mb-6 rounded-2xl overflow-hidden shadow-xl"
-      style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.12)' }}
+      className="rounded-2xl overflow-hidden shadow-2xl"
+      style={{
+        background: 'rgba(10,0,0,0.55)',
+        backdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        maxWidth: 360,
+        margin: '0 auto',
+      }}
     >
       {audioUrl && <audio ref={audioRef} src={audioUrl} preload="metadata" />}
 
-      <div className="flex items-stretch">
-        {/* Cover art */}
-        <div className="relative flex-shrink-0" style={{ width: 90, height: 90 }}>
+      <div className="flex items-stretch" style={{ height: 80 }}>
+        {/* Cover art — fills entire left side */}
+        <div className="relative flex-shrink-0" style={{ width: 80, height: 80 }}>
           {coverUrl ? (
-            <Image src={coverUrl} alt={title} fill className="object-cover" sizes="90px" />
+            <Image
+              src={coverUrl}
+              alt={title}
+              fill
+              className="object-cover"
+              sizes="80px"
+            />
           ) : (
-            <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.08)' }}>
-              <span style={{ fontSize: 28, opacity: 0.4 }}>♪</span>
+            <div className="w-full h-full flex items-center justify-center text-2xl"
+              style={{ background: `linear-gradient(135deg, ${accent}55, rgba(0,0,0,0.4))` }}>
+              ♪
             </div>
           )}
         </div>
 
-        {/* Controls */}
-        <div className="flex-1 px-4 py-3 flex flex-col justify-between min-w-0">
-          {/* Title & artist */}
-          <div>
-            <p className="font-playfair font-semibold text-white truncate" style={{ fontSize: '0.85rem' }}>{title}</p>
-            <p className="text-white/60 truncate" style={{ fontSize: '0.72rem' }}>{artist}</p>
+        {/* Right side — title + controls */}
+        <div className="flex-1 px-3 py-2.5 flex flex-col justify-between min-w-0">
+          {/* Title + artist */}
+          <div className="min-w-0">
+            <p className="font-playfair font-semibold text-white truncate leading-tight" style={{ fontSize: '0.8rem' }}>
+              {title}
+            </p>
+            <p className="truncate leading-tight" style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.55)' }}>
+              {artist}
+            </p>
           </div>
 
           {/* Progress bar */}
-          <div>
-            <div className="relative w-full h-1 rounded-full mb-1" style={{ background: 'rgba(255,255,255,0.2)' }}>
-              <div className="absolute left-0 top-0 h-full rounded-full transition-all" style={{ width: `${progressPct}%`, background: 'white' }} />
-              <input
-                type="range" min={0} max={duration || 1} step={0.1} value={progress}
-                onChange={seek}
-                className="absolute inset-0 w-full opacity-0 cursor-pointer h-full"
-              />
+          <div className="relative w-full" style={{ height: 14 }}>
+            <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-0.5 rounded-full"
+              style={{ background: 'rgba(255,255,255,0.2)' }}>
+              <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'rgba(255,255,255,0.8)' }} />
             </div>
-            <div className="flex justify-between" style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.5)' }}>
-              <span>{fmt(progress)}</span>
-              <span>{fmt(duration)}</span>
-            </div>
+            <input type="range" min={0} max={duration || 1} step={0.1} value={progress}
+              onChange={seek}
+              className="absolute inset-0 w-full opacity-0 cursor-pointer" />
           </div>
 
-          {/* Buttons row */}
+          {/* Time + controls */}
           <div className="flex items-center justify-between">
-            {/* Playback */}
-            <div className="flex items-center gap-3">
-              <button onClick={() => { if (audioRef.current) audioRef.current.currentTime = Math.max(0, progress - 10) }}
-                className="text-white/70 hover:text-white transition-colors">
-                <SkipBack className="w-4 h-4" />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => { if (audioRef.current) audioRef.current.currentTime = Math.max(0, progress - 10) }}
+                style={{ color: 'rgba(255,255,255,0.6)' }}
+                className="hover:text-white transition-colors"
+              >
+                <SkipBack className="w-3.5 h-3.5" />
               </button>
+
               <button
                 onClick={togglePlay}
                 disabled={!audioUrl}
-                className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110 disabled:opacity-40"
+                className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110 disabled:opacity-40 flex-shrink-0"
                 style={{ background: 'white' }}
               >
                 {playing
-                  ? <Pause className="w-4 h-4" style={{ color: accent }} />
-                  : <Play  className="w-4 h-4 ml-0.5" style={{ color: accent }} />
+                  ? <Pause className="w-3.5 h-3.5" style={{ color: accent }} />
+                  : <Play  className="w-3.5 h-3.5 ml-0.5" style={{ color: accent }} />
                 }
               </button>
-              <button onClick={() => { if (audioRef.current) audioRef.current.currentTime = Math.min(duration, progress + 10) }}
-                className="text-white/70 hover:text-white transition-colors">
-                <SkipForward className="w-4 h-4" />
+
+              <button
+                onClick={() => { if (audioRef.current) audioRef.current.currentTime = Math.min(duration, progress + 10) }}
+                style={{ color: 'rgba(255,255,255,0.6)' }}
+                className="hover:text-white transition-colors"
+              >
+                <SkipForward className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            {/* Volume */}
-            <div className="flex items-center gap-1.5">
-              <Volume2 className="w-3 h-3 text-white/50" />
-              <div className="relative w-14 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.2)' }}>
-                <div className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${volume * 100}%`, background: 'rgba(255,255,255,0.7)' }} />
-                <input type="range" min={0} max={1} step={0.01} value={volume}
-                  onChange={changeVolume}
-                  className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" />
-              </div>
+            <div className="flex gap-1" style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.4)' }}>
+              <span>{fmt(progress)}</span>
+              <span>/</span>
+              <span>{fmt(duration)}</span>
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from 'react'
 import PhotoUploadField from './PhotoUploadField'
+import MusicUploadField from './MusicUploadField'
 
 type ActionFn = (prevState: { success?: boolean } | undefined, formData: FormData) => Promise<{ success?: boolean } | undefined>
 
@@ -19,7 +20,8 @@ export default function AdminSettingsForm({ settings, action }: Props) {
     header_photo_left2:  settings.header_photo_left2  ?? '',
     header_photo_right1: settings.header_photo_right1 ?? '',
     header_photo_right2: settings.header_photo_right2 ?? '',
-    music_cover_url:     settings.music_cover_url ?? '',
+    music_cover_url:     settings.music_cover_url     ?? '',
+    music_url:           settings.music_url           ?? '',
   })
 
   const handleUploaded = (key: string, url: string) => {
@@ -157,19 +159,11 @@ export default function AdminSettingsForm({ settings, action }: Props) {
             folder="music"
             onUploaded={handleUploaded}
           />
-          <div>
-            <label className="block text-xs text-rose-400 mb-1">File MP3 (upload ke Supabase Storage, paste URL di sini)</label>
-            <input
-              type="url"
-              name="music_url"
-              defaultValue={settings.music_url ?? ''}
-              placeholder="https://...supabase.co/storage/.../lagu.mp3"
-              className="w-full px-4 py-2.5 rounded-xl border border-rose-200 bg-white focus:outline-none focus:ring-2 focus:ring-rose-300 text-rose-800 text-sm"
-            />
-          </div>
-          <p className="text-xs text-rose-300">
-            Upload MP3 ke Supabase Storage → folder &quot;music&quot; → copy public URL → paste di sini.
-          </p>
+          <MusicUploadField
+            currentUrl={photoUrls.music_url ?? settings.music_url ?? ''}
+            onUploaded={(url) => setPhotoUrls(prev => ({ ...prev, music_url: url }))}
+          />
+          <input type="hidden" name="music_url" value={photoUrls.music_url ?? settings.music_url ?? ''} />
         </div>
       </section>
 
