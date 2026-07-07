@@ -191,8 +191,13 @@ export default function SnakeLadder({ onBack, truthDare }: Props) {
       {/* Scores */}
       <div className="grid grid-cols-2 gap-2">
         {[0, 1].map(p => (
-          <div key={p} className={`rounded-2xl py-3 px-4 text-center transition-all ${turn === p && !winner ? 'ring-2 ring-offset-1' : ''}`}
-            style={{ background: '#f5e8e8', ringColor: playerColors[p] }}>
+          <div key={p}
+            className="rounded-2xl py-3 px-4 text-center transition-all"
+            style={{
+              background: '#f5e8e8',
+              outline: turn === p && !winner ? `2px solid ${playerColors[p]}` : 'none',
+              outlineOffset: 2,
+            }}>
             <p className="text-xs" style={{ color: '#a06060' }}>{playerLabels[p]}</p>
             <p className="text-2xl font-bold font-playfair" style={{ color: playerColors[p] }}>
               {positions[p] === 0 ? 'START' : positions[p]}
