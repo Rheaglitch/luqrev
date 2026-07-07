@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import Image from 'next/image'
 import { Trash2, Upload, Loader2 } from 'lucide-react'
 import { deleteSlide } from '@/lib/actions/admin'
-import { createClient } from '@/lib/supabase/client'
+import { uploadFile, sanitizeFilename, UploadError } from '@/lib/upload'
 import { useRouter } from 'next/navigation'
 
 interface Slide {
@@ -30,20 +30,13 @@ export default function SlideshowManager({ slides }: Props) {
 
     setUploading(true)
     try {
-      const supabase = createClient()
-      const path = `slideshow/${Date.now()}-${file.name.replace(/\s/g, '-')}`
+      const path = `slideshow/${Date.now()}-${sanitizeFilename(file.name)}`
+      const publicUrl = await uploadFile(file, path)
 
-      const { error: uploadError } = await supabase.storage
-        .from('love-media')
-        .upload(path, file)
-
-      if (uploadError) throw uploadError
-
-      const { data: urlData } = supabase.storage.from('love-media').getPublicUrl(path)
-
+      const supabase = (await import('@/lib/supabase/client')).createClient()
       await supabase.from('love_slideshow').insert({
         storage_path: path,
-        public_url: urlData.publicUrl,
+        public_url: publicUrl,
         caption: caption.trim() || null,
         sort_order: slides.length,
       })
@@ -52,7 +45,7 @@ export default function SlideshowManager({ slides }: Props) {
       router.refresh()
     } catch (err) {
       console.error(err)
-      alert('Upload gagal, coba lagi.')
+      alert(err instanceof UploadError ? err.message : 'Upload gagal, coba lagi.')
     } finally {
       setUploading(false)
     }

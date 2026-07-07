@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { Upload, Loader2, X } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { uploadFile, UploadError } from '@/lib/upload'
 
 interface Props {
   label: string
@@ -29,22 +29,14 @@ export default function PhotoUploadField({ label, settingKey, currentUrl, folder
     setError('')
 
     try {
-      const supabase = createClient()
       const ext = file.name.split('.').pop()
       const path = `${folder}/${settingKey}-${Date.now()}.${ext}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('love-media')
-        .upload(path, file, { upsert: true })
-
-      if (uploadError) throw uploadError
-
-      const { data } = supabase.storage.from('love-media').getPublicUrl(path)
-      setPreview(data.publicUrl)
-      onUploaded(settingKey, data.publicUrl)
+      const publicUrl = await uploadFile(file, path, { upsert: true })
+      setPreview(publicUrl)
+      onUploaded(settingKey, publicUrl)
     } catch (err) {
       console.error(err)
-      setError('Upload gagal, coba lagi.')
+      setError(err instanceof UploadError ? err.message : 'Upload gagal, coba lagi.')
     } finally {
       setUploading(false)
     }

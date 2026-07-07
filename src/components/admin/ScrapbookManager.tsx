@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import Image from 'next/image'
 import { Plus, Trash2, Upload, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
 import { deleteBook } from '@/lib/actions/admin'
+import { uploadFile, UploadError } from '@/lib/upload'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -45,29 +46,37 @@ export default function ScrapbookManager({ books }: Props) {
 
   const uploadCover = async (bookId: string, file: File) => {
     setUploading(bookId + '-cover')
-    const supabase = createClient()
-    const path = `scrapbook/${bookId}/cover-${Date.now()}.${file.name.split('.').pop()}`
-    await supabase.storage.from('love-media').upload(path, file)
-    const { data } = supabase.storage.from('love-media').getPublicUrl(path)
-    await supabase.from('love_scrapbooks').update({ cover_url: data.publicUrl }).eq('id', bookId)
-    setUploading(null)
-    router.refresh()
+    try {
+      const path = `scrapbook/${bookId}/cover-${Date.now()}.${file.name.split('.').pop()}`
+      const publicUrl = await uploadFile(file, path)
+      const supabase = createClient()
+      await supabase.from('love_scrapbooks').update({ cover_url: publicUrl }).eq('id', bookId)
+      router.refresh()
+    } catch (err) {
+      alert(err instanceof UploadError ? err.message : 'Upload gagal.')
+    } finally {
+      setUploading(null)
+    }
   }
 
   const uploadPage = async (bookId: string, file: File, pageNum: number) => {
     setUploading(bookId + '-page')
-    const supabase = createClient()
-    const path = `scrapbook/${bookId}/page-${Date.now()}.${file.name.split('.').pop()}`
-    await supabase.storage.from('love-media').upload(path, file)
-    const { data } = supabase.storage.from('love-media').getPublicUrl(path)
-    await supabase.from('love_scrapbook_pages').insert({
-      book_id: bookId,
-      page_number: pageNum,
-      storage_path: path,
-      public_url: data.publicUrl,
-    })
-    setUploading(null)
-    router.refresh()
+    try {
+      const path = `scrapbook/${bookId}/page-${Date.now()}.${file.name.split('.').pop()}`
+      const publicUrl = await uploadFile(file, path)
+      const supabase = createClient()
+      await supabase.from('love_scrapbook_pages').insert({
+        book_id: bookId,
+        page_number: pageNum,
+        storage_path: path,
+        public_url: publicUrl,
+      })
+      router.refresh()
+    } catch (err) {
+      alert(err instanceof UploadError ? err.message : 'Upload gagal.')
+    } finally {
+      setUploading(null)
+    }
   }
 
   return (

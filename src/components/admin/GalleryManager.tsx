@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import Image from 'next/image'
 import { Trash2, Upload, Loader2 } from 'lucide-react'
 import { deleteGalleryPhoto } from '@/lib/actions/admin'
-import { createClient } from '@/lib/supabase/client'
+import { uploadFile, sanitizeFilename, UploadError } from '@/lib/upload'
 import { useRouter } from 'next/navigation'
 
 interface Photo {
@@ -34,14 +34,13 @@ export default function GalleryManager({ photos, categories }: Props) {
     if (!file) return
     setUploading(true)
     try {
-      const supabase = createClient()
-      const path = `gallery/${Date.now()}-${file.name.replace(/\s/g, '-')}`
-      const { error } = await supabase.storage.from('love-media').upload(path, file)
-      if (error) throw error
-      const { data: urlData } = supabase.storage.from('love-media').getPublicUrl(path)
+      const path = `gallery/${Date.now()}-${sanitizeFilename(file.name)}`
+      const publicUrl = await uploadFile(file, path)
+
+      const supabase = (await import('@/lib/supabase/client')).createClient()
       await supabase.from('love_gallery').insert({
         storage_path: path,
-        public_url: urlData.publicUrl,
+        public_url: publicUrl,
         caption: caption.trim() || null,
         category: effectiveCategory || null,
       })
@@ -49,7 +48,7 @@ export default function GalleryManager({ photos, categories }: Props) {
       router.refresh()
     } catch (err) {
       console.error(err)
-      alert('Upload gagal.')
+      alert(err instanceof UploadError ? err.message : 'Upload gagal.')
     } finally {
       setUploading(false)
     }
