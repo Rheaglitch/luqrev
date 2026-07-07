@@ -30,20 +30,21 @@ export default function GalleryManager({ photos, categories }: Props) {
   const effectiveCategory = newCategory.trim() || category
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files ?? [])
+    if (files.length === 0) return
     setUploading(true)
     try {
-      const path = `gallery/${Date.now()}-${sanitizeFilename(file.name)}`
-      const publicUrl = await uploadFile(file, path)
-
       const supabase = (await import('@/lib/supabase/client')).createClient()
-      await supabase.from('love_gallery').insert({
-        storage_path: path,
-        public_url: publicUrl,
-        caption: caption.trim() || null,
-        category: effectiveCategory || null,
-      })
+      for (const file of files) {
+        const path = `gallery/${Date.now()}-${sanitizeFilename(file.name)}`
+        const publicUrl = await uploadFile(file, path)
+        await supabase.from('love_gallery').insert({
+          storage_path: path,
+          public_url: publicUrl,
+          caption: files.length === 1 ? caption.trim() || null : null,
+          category: effectiveCategory || null,
+        })
+      }
       setCaption('')
       router.refresh()
     } catch (err) {
@@ -72,7 +73,7 @@ export default function GalleryManager({ photos, categories }: Props) {
         </div>
         <label className={`flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? 'border-rose-300 bg-rose-50' : 'border-rose-200 hover:border-rose-400'}`}>
           {uploading ? <><Loader2 className="w-4 h-4 text-rose-400 animate-spin" /><span className="text-sm text-rose-400">Mengupload...</span></> : <><Upload className="w-4 h-4 text-rose-400" /><span className="text-sm text-rose-400">Pilih foto</span></>}
-          <input type="file" accept="image/*" className="sr-only" onChange={handleUpload} disabled={uploading} />
+          <input type="file" accept="image/*" multiple className="sr-only" onChange={handleUpload} disabled={uploading} />
         </label>
       </div>
 

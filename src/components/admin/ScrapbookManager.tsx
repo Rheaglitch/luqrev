@@ -59,18 +59,24 @@ export default function ScrapbookManager({ books }: Props) {
     }
   }
 
-  const uploadPage = async (bookId: string, file: File, pageNum: number) => {
+  const uploadPage = async (bookId: string, files: FileList, startPageNum: number) => {
     setUploading(bookId + '-page')
     try {
-      const path = `scrapbook/${bookId}/page-${Date.now()}.${file.name.split('.').pop()}`
-      const publicUrl = await uploadFile(file, path)
       const supabase = createClient()
-      await supabase.from('love_scrapbook_pages').insert({
-        book_id: bookId,
-        page_number: pageNum,
-        storage_path: path,
-        public_url: publicUrl,
-      })
+      let pageNum = startPageNum
+      for (const file of Array.from(files)) {
+        const ext = file.name.split('.').pop()
+        const path = `scrapbook/${bookId}/page-${Date.now()}-${pageNum}.${ext}`
+        const publicUrl = await uploadFile(file, path)
+        await supabase.from('love_scrapbook_pages').insert({
+          book_id: bookId,
+          page_number: pageNum,
+          storage_path: path,
+          public_url: publicUrl,
+          file_type: file.type.includes('pdf') ? 'pdf' : 'image',
+        })
+        pageNum++
+      }
       router.refresh()
     } catch (err) {
       alert(err instanceof UploadError ? err.message : 'Upload gagal.')
@@ -143,21 +149,30 @@ export default function ScrapbookManager({ books }: Props) {
                 <div className="grid grid-cols-4 gap-2">
                   {pages.sort((a, b) => a.page_number - b.page_number).map((page) => (
                     <div key={page.id} className="relative aspect-[3/4] rounded-lg overflow-hidden bg-rose-50">
-                      <Image src={page.public_url} alt="" fill className="object-cover" sizes="80px" />
+                      {page.public_url.endsWith('.pdf') || page.file_type === 'pdf' ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-red-50">
+                          <span className="text-2xl">📄</span>
+                          <span className="text-[9px] text-rose-400">PDF</span>
+                        </div>
+                      ) : (
+                        <Image src={page.public_url} alt="" fill className="object-cover" sizes="80px" />
+                      )}
                       <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-center py-0.5">
                         <span className="text-white text-xs">{page.page_number}</span>
                       </div>
                     </div>
                   ))}
-                  {/* Upload page */}
-                  <label className="aspect-[3/4] rounded-lg border-2 border-dashed border-rose-200 hover:border-rose-400 flex items-center justify-center cursor-pointer transition-colors bg-rose-50">
+                  <label className="aspect-[3/4] rounded-lg border-2 border-dashed border-rose-200 hover:border-rose-400 flex flex-col items-center justify-center cursor-pointer transition-colors bg-rose-50 gap-1">
                     {uploading === book.id + '-page' ? (
                       <Loader2 className="w-5 h-5 text-rose-300 animate-spin" />
                     ) : (
-                      <Plus className="w-5 h-5 text-rose-300" />
+                      <>
+                        <Plus className="w-5 h-5 text-rose-300" />
+                        <span className="text-[9px] text-rose-300 text-center px-1">Foto / PDF</span>
+                      </>
                     )}
-                    <input type="file" accept="image/*" className="sr-only"
-                      onChange={(e) => e.target.files?.[0] && uploadPage(book.id, e.target.files[0], pages.length + 1)} />
+                    <input type="file" accept="image/*,application/pdf" multiple className="sr-only"
+                      onChange={(e) => e.target.files && uploadPage(book.id, e.target.files, pages.length + 1)} />
                   </label>
                 </div>
               </div>

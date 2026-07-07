@@ -25,22 +25,22 @@ export default function SlideshowManager({ slides }: Props) {
   const router = useRouter()
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files ?? [])
+    if (files.length === 0) return
 
     setUploading(true)
     try {
-      const path = `slideshow/${Date.now()}-${sanitizeFilename(file.name)}`
-      const publicUrl = await uploadFile(file, path)
-
       const supabase = (await import('@/lib/supabase/client')).createClient()
-      await supabase.from('love_slideshow').insert({
-        storage_path: path,
-        public_url: publicUrl,
-        caption: caption.trim() || null,
-        sort_order: slides.length,
-      })
-
+      for (const file of files) {
+        const path = `slideshow/${Date.now()}-${sanitizeFilename(file.name)}`
+        const publicUrl = await uploadFile(file, path)
+        await supabase.from('love_slideshow').insert({
+          storage_path: path,
+          public_url: publicUrl,
+          caption: files.length === 1 ? caption.trim() || null : null,
+          sort_order: slides.length,
+        })
+      }
       setCaption('')
       router.refresh()
     } catch (err) {
@@ -74,7 +74,7 @@ export default function SlideshowManager({ slides }: Props) {
           ) : (
             <><Upload className="w-4 h-4 text-rose-400" /><span className="text-sm text-rose-400">Pilih foto</span></>
           )}
-          <input type="file" accept="image/*" className="sr-only" onChange={handleUpload} disabled={uploading} />
+          <input type="file" accept="image/*" multiple className="sr-only" onChange={handleUpload} disabled={uploading} />
         </label>
       </div>
 

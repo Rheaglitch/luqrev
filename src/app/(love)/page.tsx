@@ -44,7 +44,7 @@ export default async function HomePage() {
       <section className="flex gap-0 w-full">
 
         {/* Slideshow — 65% lebar, tinggi mengikuti aspek rasio */}
-        <div className="relative min-w-0" style={{ width: '65%', aspectRatio: '16/9' }}>
+        <div className="relative min-w-0" style={{ width: '65%', aspectRatio: '4/3' }}>
           {slides.length > 0 ? (
             <Slideshow slides={slides} />
           ) : (
@@ -73,25 +73,43 @@ export default async function HomePage() {
               </p>
             ) : (
               <>
-                {upcomingEvents.map(event => (
-                  <div key={event.id} className="rounded-xl px-4 py-3 flex items-start gap-2.5"
-                    style={{ background: 'rgba(255,255,255,0.07)' }}>
-                    <Calendar className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: 'rgba(255,180,180,0.7)' }} />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate" style={{ color: 'white' }}>{event.title}</p>
-                      <p className="text-xs mt-0.5" style={{ color: 'rgba(255,180,180,0.6)' }}>
-                        {getDaysTo(event.event_date) === 0 ? 'Hari ini! 🎉' : `${getDaysTo(event.event_date)} hari lagi`}
-                      </p>
+                {upcomingEvents.map(event => {
+                  const d = getDaysTo(event.event_date)
+                  return (
+                    <div key={event.id} className="rounded-2xl p-3 flex gap-3 items-start border border-white/10"
+                      style={{ background: 'rgba(255,255,255,0.08)' }}>
+                      <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: 'rgba(255,180,180,0.15)' }}>
+                        <Calendar className="w-4 h-4" style={{ color: 'rgba(255,180,180,0.8)' }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium leading-tight" style={{ color: 'white' }}>{event.title}</p>
+                        <p className="text-xs mt-0.5" style={{ color: 'rgba(255,180,180,0.6)' }}>
+                          {formatDate(event.event_date)}
+                        </p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-sm font-bold" style={{ color: 'rgba(255,180,180,0.9)' }}>
+                          {d === 0 ? '🎉' : d}
+                        </p>
+                        {d > 0 && <p className="text-[9px]" style={{ color: 'rgba(255,180,180,0.4)' }}>hari lagi</p>}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
+                {upcomingEvents.length > 0 && pastEvents.length > 0 && (
+                  <p className="text-[10px] uppercase tracking-wider px-1 pt-1" style={{ color: 'rgba(255,180,180,0.35)' }}>Kenangan</p>
+                )}
                 {pastEvents.map(event => (
-                  <div key={event.id} className="rounded-xl px-4 py-2.5 flex items-start gap-2.5 opacity-60"
+                  <div key={event.id} className="rounded-2xl p-3 flex gap-3 items-start opacity-55"
                     style={{ background: 'rgba(255,255,255,0.04)' }}>
-                    <Heart className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: 'rgba(255,180,180,0.5)' }} />
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: 'rgba(255,180,180,0.08)' }}>
+                      <Heart className="w-4 h-4" style={{ color: 'rgba(255,180,180,0.4)' }} />
+                    </div>
                     <div className="min-w-0">
-                      <p className="text-sm truncate" style={{ color: 'rgba(255,255,255,0.75)' }}>{event.title}</p>
-                      <p className="text-xs mt-0.5" style={{ color: 'rgba(255,180,180,0.45)' }}>{formatDate(event.event_date)}</p>
+                      <p className="text-sm leading-tight" style={{ color: 'rgba(255,255,255,0.7)' }}>{event.title}</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'rgba(255,180,180,0.4)' }}>{formatDate(event.event_date)}</p>
                     </div>
                   </div>
                 ))}
