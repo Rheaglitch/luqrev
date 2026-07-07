@@ -13,6 +13,7 @@ interface ScrapPage {
   page_number: number
   public_url: string
   caption: string | null
+  file_type?: string | null
 }
 
 interface Book {
