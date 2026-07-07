@@ -56,60 +56,55 @@ export default async function HomePage() {
 
         {/* Momen — 35% lebar, tinggi mengikuti slideshow */}
         <div
-          className="flex-1 flex flex-col overflow-hidden"
-          style={{ background: 'linear-gradient(180deg, #2a0808 0%, #3d0c0c 100%)' }}
+          className="flex-1 flex flex-col overflow-hidden bg-[#fdf6f6]"
         >
-          <div className="px-5 pt-5 pb-2 flex items-center justify-between flex-shrink-0">
-            <h2 className="font-playfair text-base font-bold text-white">Momen Spesial</h2>
-            <Link href="/events" className="text-xs text-[rgba(255,200,200,0.6)] hover:text-white transition-colors flex items-center gap-0.5">
+          <div className="px-4 pt-4 pb-2 flex items-center justify-between flex-shrink-0 border-b border-rose-100">
+            <h2 className="font-playfair text-base font-bold text-[#3d0c0c]">Momen Spesial</h2>
+            <Link href="/events" className="text-xs text-rose-400 hover:text-rose-600 transition-colors flex items-center gap-0.5">
               Semua <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2.5 scrollbar-none">
+          <div className="flex-1 overflow-y-auto px-3 pb-3 pt-3 space-y-2.5 scrollbar-none">
             {upcomingEvents.length === 0 && pastEvents.length === 0 ? (
-              <p className="text-xs text-center py-4" style={{ color: 'rgba(255,180,180,0.4)' }}>
-                Belum ada momen~
-              </p>
+              <p className="text-xs text-center py-4 font-playfair text-rose-300">Belum ada momen~</p>
             ) : (
               <>
+                {upcomingEvents.length > 0 && (
+                  <p className="text-rose-500 font-medium uppercase tracking-wide text-[10px] mb-1">Yang Akan Datang</p>
+                )}
                 {upcomingEvents.map(event => {
                   const d = getDaysTo(event.event_date)
                   return (
-                    <div key={event.id} className="rounded-2xl p-3 flex gap-3 items-start border border-white/10"
-                      style={{ background: 'rgba(255,255,255,0.08)' }}>
-                      <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: 'rgba(255,180,180,0.15)' }}>
-                        <Calendar className="w-4 h-4" style={{ color: 'rgba(255,180,180,0.8)' }} />
+                    <div key={event.id} className="bg-white rounded-2xl shadow-sm border border-rose-100 p-3 flex gap-3 items-start">
+                      <div className="w-8 h-8 bg-rose-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Calendar className="w-4 h-4 text-rose-400" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium leading-tight" style={{ color: 'white' }}>{event.title}</p>
-                        <p className="text-xs mt-0.5" style={{ color: 'rgba(255,180,180,0.6)' }}>
-                          {formatDate(event.event_date)}
-                        </p>
+                        <p className="font-playfair text-rose-800 text-sm font-medium leading-tight truncate">{event.title}</p>
+                        <p className="text-rose-400 text-xs">{formatDate(event.event_date)}</p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-bold" style={{ color: 'rgba(255,180,180,0.9)' }}>
+                        <span className="text-rose-500 font-bold text-sm">
                           {d === 0 ? '🎉' : d}
-                        </p>
-                        {d > 0 && <p className="text-[9px]" style={{ color: 'rgba(255,180,180,0.4)' }}>hari lagi</p>}
+                        </span>
+                        {d > 0 && <p className="text-rose-300 text-[10px]">hari lagi</p>}
                       </div>
                     </div>
                   )
                 })}
-                {upcomingEvents.length > 0 && pastEvents.length > 0 && (
-                  <p className="text-[10px] uppercase tracking-wider px-1 pt-1" style={{ color: 'rgba(255,180,180,0.35)' }}>Kenangan</p>
+
+                {pastEvents.length > 0 && (
+                  <p className="text-rose-400 font-medium uppercase tracking-wide text-[10px] pt-1 mb-1">Kenangan</p>
                 )}
                 {pastEvents.map(event => (
-                  <div key={event.id} className="rounded-2xl p-3 flex gap-3 items-start opacity-55"
-                    style={{ background: 'rgba(255,255,255,0.04)' }}>
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ background: 'rgba(255,180,180,0.08)' }}>
-                      <Heart className="w-4 h-4" style={{ color: 'rgba(255,180,180,0.4)' }} />
+                  <div key={event.id} className="bg-white/60 rounded-2xl border border-rose-100 p-3 flex gap-3 items-start opacity-80">
+                    <div className="w-8 h-8 bg-rose-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Heart className="w-4 h-4 text-rose-300 fill-rose-200" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm leading-tight" style={{ color: 'rgba(255,255,255,0.7)' }}>{event.title}</p>
-                      <p className="text-xs mt-0.5" style={{ color: 'rgba(255,180,180,0.4)' }}>{formatDate(event.event_date)}</p>
+                      <p className="font-playfair text-rose-700 text-sm leading-tight truncate">{event.title}</p>
+                      <p className="text-rose-300 text-xs">{formatDate(event.event_date)}</p>
                     </div>
                   </div>
                 ))}
