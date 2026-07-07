@@ -54,7 +54,7 @@ export default function LoveHeader({ settings, theme }: Props) {
           radial-gradient(ellipse at 80% 50%, rgba(80,5,5,0.4) 0%, transparent 60%),
           #5c0f0f
         `,
-        minHeight: 220,
+        minHeight: 320,
       }}
     >
       {/* Fabric texture overlay */}
@@ -85,7 +85,7 @@ export default function LoveHeader({ settings, theme }: Props) {
       ))}
 
       {/* ── MAIN LAYOUT ── */}
-      <div className="relative z-10 flex gap-0 h-full" style={{ minHeight: 220 }}>
+      <div className="relative z-10 flex gap-0 h-full" style={{ minHeight: 320 }}>
 
         {/* ═══ LEFT — Photo collage ═══ */}
         <div className="relative flex-shrink-0" style={{ width: '45%', padding: '16px 12px 16px 16px' }}>
