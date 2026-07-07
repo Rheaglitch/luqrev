@@ -17,12 +17,8 @@ export default async function HomePage() {
   ])
 
   const now = new Date()
-  const upcomingEvents = events
-    .filter(e => new Date(e.event_date) >= now)
-    .slice(0, 4)
-  const pastEvents = events
-    .filter(e => new Date(e.event_date) < now)
-    .slice(0, 2)
+  const upcomingEvents = events.filter(e => new Date(e.event_date) >= now)
+  const pastEvents = events.filter(e => new Date(e.event_date) < now)
 
   const previewPhotos  = photos.slice(0, 4)
   const previewBooks   = books.slice(0, 3)
