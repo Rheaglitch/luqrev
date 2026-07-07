@@ -1,6 +1,7 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
+import PhotoUploadField from './PhotoUploadField'
 
 type ActionFn = (prevState: { success?: boolean } | undefined, formData: FormData) => Promise<{ success?: boolean } | undefined>
 
@@ -11,6 +12,18 @@ interface Props {
 
 export default function AdminSettingsForm({ settings, action }: Props) {
   const [state, formAction, isPending] = useActionState(action, undefined)
+
+  // Track uploaded photo URLs (overrides initial settings on upload)
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({
+    header_photo_left1:  settings.header_photo_left1  ?? '',
+    header_photo_left2:  settings.header_photo_left2  ?? '',
+    header_photo_right1: settings.header_photo_right1 ?? '',
+    header_photo_right2: settings.header_photo_right2 ?? '',
+  })
+
+  const handleUploaded = (key: string, url: string) => {
+    setPhotoUrls(prev => ({ ...prev, [key]: url }))
+  }
 
   const field = (name: string, label: string, type = 'text', placeholder = '') => (
     <div>
@@ -68,6 +81,11 @@ export default function AdminSettingsForm({ settings, action }: Props) {
 
   return (
     <form action={formAction} className="space-y-6">
+      {/* Hidden fields for photo URLs — updated by PhotoUploadField via onUploaded */}
+      {Object.entries(photoUrls).map(([key, val]) => (
+        <input key={key} type="hidden" name={key} value={val} />
+      ))}
+
       {/* Password gate */}
       <section className="bg-white rounded-2xl p-5 border border-rose-100 space-y-4">
         <h2 className="font-medium text-rose-700">Sandi Pintu Masuk</h2>
@@ -86,23 +104,46 @@ export default function AdminSettingsForm({ settings, action }: Props) {
       </section>
 
       {/* Header template */}
-      <section className="bg-white rounded-2xl p-5 border border-rose-100 space-y-4">
+      <section className="bg-white rounded-2xl p-5 border border-rose-100 space-y-5">
         <h2 className="font-medium text-rose-700">Header</h2>
-        {field('header_title',        'Judul (contoh: Best Couple)',    'text', 'Best Couple')}
-        {field('header_quote_bottom', 'Quote bawah',                   'text', 'Two people who met because of fate...')}
-        <div className="border-t border-rose-100 pt-3 space-y-3">
-          <p className="text-xs font-medium text-rose-500">Foto kiri (kolase bertumpuk)</p>
-          {field('header_photo_left1',  'URL Foto kiri atas',  'url', 'https://...')}
-          {field('header_photo_left2',  'URL Foto kiri bawah', 'url', 'https://...')}
+        {field('header_title',        'Judul (contoh: Best Couple)', 'text', 'Best Couple')}
+        {field('header_quote_bottom', 'Quote bawah', 'text', 'Two people who met because of fate...')}
+
+        <div className="border-t border-rose-100 pt-4 space-y-4">
+          <p className="text-xs font-medium text-rose-500">📸 Foto kiri (kolase bertumpuk)</p>
+          <PhotoUploadField
+            label="Foto kiri atas"
+            settingKey="header_photo_left1"
+            currentUrl={photoUrls.header_photo_left1}
+            folder="header"
+            onUploaded={handleUploaded}
+          />
+          <PhotoUploadField
+            label="Foto kiri bawah"
+            settingKey="header_photo_left2"
+            currentUrl={photoUrls.header_photo_left2}
+            folder="header"
+            onUploaded={handleUploaded}
+          />
         </div>
-        <div className="border-t border-rose-100 pt-3 space-y-3">
-          <p className="text-xs font-medium text-rose-500">Foto kanan (polaroid per orang)</p>
-          {field('header_photo_right1', `URL Foto ${settings.partner1_name ?? 'Orang 1'}`, 'url', 'https://...')}
-          {field('header_photo_right2', `URL Foto ${settings.partner2_name ?? 'Orang 2'}`, 'url', 'https://...')}
+
+        <div className="border-t border-rose-100 pt-4 space-y-4">
+          <p className="text-xs font-medium text-rose-500">🪪 Foto kanan (polaroid per orang)</p>
+          <PhotoUploadField
+            label={`Foto ${settings.partner1_name ?? 'Orang 1'}`}
+            settingKey="header_photo_right1"
+            currentUrl={photoUrls.header_photo_right1}
+            folder="header"
+            onUploaded={handleUploaded}
+          />
+          <PhotoUploadField
+            label={`Foto ${settings.partner2_name ?? 'Orang 2'}`}
+            settingKey="header_photo_right2"
+            currentUrl={photoUrls.header_photo_right2}
+            folder="header"
+            onUploaded={handleUploaded}
+          />
         </div>
-        <p className="text-xs text-rose-300">
-          Upload foto ke Supabase Storage → copy public URL → paste di sini.
-        </p>
       </section>
 
       {/* Theme events */}
