@@ -19,6 +19,7 @@ export default function AdminSettingsForm({ settings, action }: Props) {
     header_photo_left2:  settings.header_photo_left2  ?? '',
     header_photo_right1: settings.header_photo_right1 ?? '',
     header_photo_right2: settings.header_photo_right2 ?? '',
+    music_cover_url:     settings.music_cover_url ?? '',
   })
 
   const handleUploaded = (key: string, url: string) => {
@@ -143,6 +144,32 @@ export default function AdminSettingsForm({ settings, action }: Props) {
             folder="header"
             onUploaded={handleUploaded}
           />
+        </div>
+
+        <div className="border-t border-rose-100 pt-4 space-y-4">
+          <p className="text-xs font-medium text-rose-500">🎵 Lagu Favorit Kita</p>
+          {field('music_title',  'Judul lagu', 'text', 'contoh: Love Story')}
+          {field('music_artist', 'Artis / penyanyi', 'text', 'contoh: Taylor Swift')}
+          <PhotoUploadField
+            label="Cover lagu (foto album)"
+            settingKey="music_cover_url"
+            currentUrl={photoUrls.music_cover_url ?? ''}
+            folder="music"
+            onUploaded={handleUploaded}
+          />
+          <div>
+            <label className="block text-xs text-rose-400 mb-1">File MP3 (upload ke Supabase Storage, paste URL di sini)</label>
+            <input
+              type="url"
+              name="music_url"
+              defaultValue={settings.music_url ?? ''}
+              placeholder="https://...supabase.co/storage/.../lagu.mp3"
+              className="w-full px-4 py-2.5 rounded-xl border border-rose-200 bg-white focus:outline-none focus:ring-2 focus:ring-rose-300 text-rose-800 text-sm"
+            />
+          </div>
+          <p className="text-xs text-rose-300">
+            Upload MP3 ke Supabase Storage → folder &quot;music&quot; → copy public URL → paste di sini.
+          </p>
         </div>
       </section>
 

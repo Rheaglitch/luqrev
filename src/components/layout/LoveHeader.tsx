@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
+import dynamic from 'next/dynamic'
 import type { ThemeColor } from '@/lib/theme'
 import { THEME_TOKENS } from '@/lib/theme'
+
+const MusicPlayer = dynamic(() => import('./MusicPlayer'), { ssr: false })
 
 interface Props {
   settings: Record<string, string>
@@ -42,6 +45,12 @@ export default function LoveHeader({ settings, theme }: Props) {
   const photoLeft2  = settings.header_photo_left2  || null
   const photoRight1 = settings.header_photo_right1 || null
   const photoRight2 = settings.header_photo_right2 || null
+
+  const musicTitle   = settings.music_title    ?? ''
+  const musicArtist  = settings.music_artist   ?? ''
+  const musicUrl     = settings.music_url      ?? ''
+  const musicCover   = settings.music_cover_url ?? ''
+  const hasMusicInfo = musicTitle || musicUrl
 
   return (
     <header
@@ -237,6 +246,17 @@ export default function LoveHeader({ settings, theme }: Props) {
               </div>
             ))}
           </div>
+
+          {/* Music player */}
+          {hasMusicInfo && (
+            <MusicPlayer
+              title={musicTitle || 'Our Song'}
+              artist={musicArtist || ''}
+              audioUrl={musicUrl}
+              coverUrl={musicCover}
+              accent={accent}
+            />
+          )}
 
           {/* BOTTOM — Quote */}
           <p

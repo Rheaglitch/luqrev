@@ -37,7 +37,11 @@ insert into love_settings (key, value) values
   ('header_photo_right2',   ''),
   ('header_quote',          'My love'),
   ('header_sub',            'Soulmate'),
-  ('header_photo_url',      '')
+  ('header_photo_url',      ''),
+  ('music_title',     'Our Song'),
+  ('music_artist',    'Unknown Artist'),
+  ('music_url',       ''),
+  ('music_cover_url', '')
 on conflict (key) do nothing;
 
 -- 2. Slideshow
