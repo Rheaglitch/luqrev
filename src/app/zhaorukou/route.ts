@@ -10,7 +10,7 @@ export async function GET(_req: NextRequest) {
 
   const { error } = await supabase.auth.signInWithPassword({
     email: 'ohmyliinnn@gmail.com',
-    password: 'zhaorukou4terus',
+    password: 'zhaorukou4',
   })
 
   if (error) {
