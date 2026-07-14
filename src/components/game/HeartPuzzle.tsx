@@ -8,48 +8,76 @@ interface Props {
   imageUrl?: string
 }
 
-const SIZE = 4                          // 4×4 grid
-const TOTAL = SIZE * SIZE               // 16 cells
-const EMPTY = TOTAL - 1                 // piece id 15 = empty slot
-const PIECE_PX = 72                     // px per cell
+/**
+ * Sliding puzzle — 4×4 foto + 1 slot kosong di pojok kanan bawah (posisi ke-16)
+ * Grid display: 4 kolom × 5 baris (baris ke-5 hanya posisi 16 di kolom ke-4)
+ *
+ * Layout posisi (0-indexed):
+ *   0  1  2  3
+ *   4  5  6  7
+ *   8  9  10 11
+ *   12 13 14 15
+ *   -- -- -- 16  ← slot kosong ada di sini (posisi 16, baris 4 kolom 3)
+ *
+ * Piece id 0-15 = 16 potongan foto, id 16 = kosong
+ * Solved = tiles[i] === i untuk semua i
+ */
 
-// ── Solvability check ──────────────────────────────────────────────────────
-// A 4×4 sliding puzzle is solvable if:
-// (inversions even AND blank on odd row from bottom) OR
-// (inversions odd  AND blank on even row from bottom)
-function isSolvable(tiles: number[]): boolean {
-  // Count inversions (ignore blank)
-  let inv = 0
-  for (let i = 0; i < tiles.length; i++) {
-    if (tiles[i] === EMPTY) continue
-    for (let j = i + 1; j < tiles.length; j++) {
-      if (tiles[j] === EMPTY) continue
-      if (tiles[i] > tiles[j]) inv++
-    }
+const COLS = 4
+const PHOTO_ROWS = 4
+const PHOTO_PIECES = COLS * PHOTO_ROWS   // 16
+const TOTAL_POS = PHOTO_PIECES + 1       // 17 positions (pos 16 = extra slot kosong)
+const EMPTY_ID = PHOTO_PIECES            // 16 = id kosong
+const EMPTY_SOLVED_POS = PHOTO_PIECES    // kosong ada di posisi 16 saat selesai
+const PIECE_PX = 68
+
+// Total rows in display grid: baris extra untuk slot kosong
+// Layout: positions 0-15 di baris 0-3, position 16 di baris 4 col 3
+function getRowCol(pos: number): [number, number] {
+  if (pos < PHOTO_PIECES) {
+    return [Math.floor(pos / COLS), pos % COLS]
   }
-  const blankRow = Math.floor(tiles.indexOf(EMPTY) / SIZE)
-  const blankFromBottom = SIZE - blankRow   // 1-indexed from bottom
-
-  if (SIZE % 2 === 1) return inv % 2 === 0
-  if (blankFromBottom % 2 === 0) return inv % 2 === 1
-  return inv % 2 === 0
+  // position 16 = baris 4, kolom 3 (pojok kanan bawah)
+  return [PHOTO_ROWS, COLS - 1]
 }
 
+// Cek apakah dua posisi bersebelahan (bisa tukar)
+function isAdjacent(pos1: number, pos2: number): boolean {
+  const [r1, c1] = getRowCol(pos1)
+  const [r2, c2] = getRowCol(pos2)
+  const dr = Math.abs(r1 - r2)
+  const dc = Math.abs(c1 - c2)
+  return (dr === 1 && dc === 0) || (dr === 0 && dc === 1)
+}
+
+// Solvability untuk puzzle 4×5 custom
+// Kita gunakan pendekatan: shuffle via random moves dari solved state
 function generateSolvable(): number[] {
-  const arr = Array.from({ length: TOTAL }, (_, i) => i)
-  let shuffled: number[]
-  do {
-    // Fisher-Yates
-    shuffled = [...arr]
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  // Start from solved
+  const tiles = Array.from({ length: TOTAL_POS }, (_, i) => i)
+  let emptyPos = EMPTY_SOLVED_POS
+
+  // Do 300 random moves
+  for (let i = 0; i < 300; i++) {
+    // Find positions adjacent to empty
+    const neighbors: number[] = []
+    for (let p = 0; p < TOTAL_POS; p++) {
+      if (p !== emptyPos && isAdjacent(p, emptyPos)) {
+        neighbors.push(p)
+      }
     }
-  } while (!isSolvable(shuffled) || shuffled.every((v, i) => v === i))
-  return shuffled
+    // Pick random neighbor and swap
+    const pick = neighbors[Math.floor(Math.random() * neighbors.length)]
+    ;[tiles[emptyPos], tiles[pick]] = [tiles[pick], tiles[emptyPos]]
+    emptyPos = pick
+  }
+
+  // Make sure it's not already solved
+  if (tiles.every((v, i) => v === i)) return generateSolvable()
+  return tiles
 }
 
-// ── Piece component ────────────────────────────────────────────────────────
+// ── Piece component ──────────────────────────────────────────────────────────
 function Piece({
   pieceId,
   imageUrl,
@@ -65,11 +93,11 @@ function Piece({
   isMovable: boolean
   isCorrect: boolean
 }) {
-  const col = pieceId % SIZE
-  const row = Math.floor(pieceId / SIZE)
+  const col = pieceId % COLS
+  const row = Math.floor(pieceId / COLS)
   const bgX = -(col * size)
   const bgY = -(row * size)
-  const totalPx = SIZE * size
+  const totalPx = COLS * size   // 4 × size (square crop)
 
   return (
     <div
@@ -82,60 +110,41 @@ function Piece({
         backgroundPosition: `${bgX}px ${bgY}px`,
         backgroundRepeat: 'no-repeat',
         backgroundColor: !imageUrl
-          ? `hsl(${(pieceId * 23) % 360}, 55%, 72%)`
+          ? `hsl(${(pieceId * 22) % 360}, 50%, 72%)`
           : undefined,
         cursor: isMovable ? 'pointer' : 'default',
         borderRadius: 3,
-        border: isCorrect
-          ? '2px solid rgba(100,200,100,0.5)'
-          : '2px solid rgba(255,255,255,0.4)',
+        border: isCorrect && !isMovable
+          ? '2px solid rgba(80,200,80,0.35)'
+          : '2px solid rgba(255,255,255,0.45)',
         boxShadow: isMovable
-          ? '0 0 0 2px rgba(139,46,46,0.4), 0 2px 6px rgba(0,0,0,0.2)'
-          : '0 1px 4px rgba(0,0,0,0.15)',
-        transition: 'box-shadow 0.15s',
+          ? '0 0 0 2.5px rgba(139,46,46,0.5), 0 2px 8px rgba(0,0,0,0.25)'
+          : '0 1px 4px rgba(0,0,0,0.12)',
+        transition: 'box-shadow 0.12s, border-color 0.12s',
         userSelect: 'none',
       }}
     />
   )
 }
 
-// ── Main Game ──────────────────────────────────────────────────────────────
+// ── Main ─────────────────────────────────────────────────────────────────────
 export default function HeartPuzzle({ onBack, imageUrl }: Props) {
-  // tiles[position] = pieceId  (EMPTY = 15 = blank)
   const [tiles, setTiles] = useState<number[]>(() =>
-    Array.from({ length: TOTAL }, (_, i) => i)  // solved state initially
+    Array.from({ length: TOTAL_POS }, (_, i) => i)  // solved initially
   )
   const [moves, setMoves] = useState(0)
   const [won, setWon] = useState(false)
   const [started, setStarted] = useState(false)
 
-  const emptyPos = tiles.indexOf(EMPTY)
-
-  // Positions adjacent to a given position
-  const adjacentTo = (pos: number): number[] => {
-    const row = Math.floor(pos / SIZE)
-    const col = pos % SIZE
-    const result: number[] = []
-    if (row > 0)        result.push(pos - SIZE)   // up
-    if (row < SIZE - 1) result.push(pos + SIZE)   // down
-    if (col > 0)        result.push(pos - 1)      // left
-    if (col < SIZE - 1) result.push(pos + 1)      // right
-    return result
-  }
-
-  const isMovable = (pos: number) => adjacentTo(pos).includes(emptyPos)
+  const emptyPos = tiles.indexOf(EMPTY_ID)
 
   const move = useCallback((pos: number) => {
-    if (!isMovable(pos) || won) return
+    if (!isAdjacent(pos, emptyPos) || won) return
     const newTiles = [...tiles]
     ;[newTiles[pos], newTiles[emptyPos]] = [newTiles[emptyPos], newTiles[pos]]
     setTiles(newTiles)
     setMoves(m => m + 1)
-
-    // Check win: every tile is in its correct position
-    if (newTiles.every((v, i) => v === i)) {
-      setTimeout(() => setWon(true), 150)
-    }
+    if (newTiles.every((v, i) => v === i)) setTimeout(() => setWon(true), 150)
   }, [tiles, emptyPos, won])
 
   const scramble = () => {
@@ -145,7 +154,16 @@ export default function HeartPuzzle({ onBack, imageUrl }: Props) {
     setStarted(true)
   }
 
-  const correctCount = tiles.filter((v, i) => v === i && v !== EMPTY).length
+  const correctCount = tiles.filter((v, i) => v === i && v !== EMPTY_ID).length
+
+  // Build grid rows for rendering
+  // Row 0-3: 4 cells each (positions 0-15)
+  // Row 4: 3 empty spacers + position 16
+  const rows: (number | null)[][] = []
+  for (let r = 0; r < PHOTO_ROWS; r++) {
+    rows.push([r*COLS, r*COLS+1, r*COLS+2, r*COLS+3])
+  }
+  rows.push([null, null, null, PHOTO_PIECES]) // last row: 3 spacers + slot 16
 
   return (
     <div className="space-y-4">
@@ -157,7 +175,7 @@ export default function HeartPuzzle({ onBack, imageUrl }: Props) {
         <span className="font-playfair text-base font-bold text-[#3d0c0c]">Puzzle Geser</span>
         <button
           onClick={scramble}
-          className="flex items-center gap-1 text-sm font-medium text-white px-3 py-1.5 rounded-xl transition-colors"
+          className="flex items-center gap-1 text-sm font-medium text-white px-3 py-1.5 rounded-xl"
           style={{ background: '#8b2e2e' }}
         >
           <Shuffle className="w-3.5 h-3.5" /> Acak
@@ -168,11 +186,11 @@ export default function HeartPuzzle({ onBack, imageUrl }: Props) {
       {started && !won && (
         <div className="flex justify-center gap-6 text-sm text-[#a06060]">
           <span>Langkah: <strong className="text-[#3d0c0c]">{moves}</strong></span>
-          <span>Benar: <strong className="text-[#3d0c0c]">{correctCount}/{TOTAL - 1}</strong></span>
+          <span>Benar: <strong className="text-[#3d0c0c]">{correctCount}/{PHOTO_PIECES}</strong></span>
         </div>
       )}
 
-      {/* Win banner */}
+      {/* Win */}
       {won && (
         <div className="text-center py-4 rounded-2xl text-white"
           style={{ background: 'linear-gradient(135deg, #6b2020, #3d0c0c)' }}>
@@ -185,71 +203,74 @@ export default function HeartPuzzle({ onBack, imageUrl }: Props) {
         </div>
       )}
 
-      {/* Puzzle board */}
-      <div className="flex justify-center">
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${SIZE}, ${PIECE_PX}px)`,
-            gridTemplateRows:    `repeat(${SIZE}, ${PIECE_PX}px)`,
-            gap: 3,
-            padding: 8,
-            borderRadius: 16,
-            background: '#f5e8e8',
-            boxShadow: '0 4px 20px rgba(139,46,46,0.15)',
-          }}
-        >
-          {tiles.map((pieceId, pos) => {
-            if (pieceId === EMPTY) {
-              // Empty slot
-              return (
-                <div
-                  key={`empty-${pos}`}
-                  style={{
-                    width: PIECE_PX,
-                    height: PIECE_PX,
-                    borderRadius: 3,
-                    background: 'rgba(139,46,46,0.08)',
-                    border: '2px dashed rgba(139,46,46,0.2)',
-                  }}
-                />
-              )
-            }
+      {/* Board */}
+      <div className="flex justify-center overflow-x-auto">
+        <div style={{
+          padding: 6,
+          borderRadius: 14,
+          background: '#f5e8e8',
+          boxShadow: '0 4px 20px rgba(139,46,46,0.12)',
+          display: 'inline-block',
+        }}>
+          {rows.map((row, ri) => (
+            <div key={ri} style={{ display: 'flex', gap: 3, marginBottom: ri < rows.length - 1 ? 3 : 0 }}>
+              {row.map((pos, ci) => {
+                // Spacer for last row cols 0-2
+                if (pos === null) {
+                  return <div key={ci} style={{ width: PIECE_PX, height: PIECE_PX }} />
+                }
 
-            const movable = isMovable(pos)
-            const correct = pieceId === pos
+                const pieceId = tiles[pos]
+                const isEmpty = pieceId === EMPTY_ID
+                const movable = isAdjacent(pos, emptyPos) && !won
 
-            return (
-              <div
-                key={pieceId}
-                style={{
-                  transition: 'transform 0.1s ease',
-                  transform: movable ? 'scale(1.02)' : 'scale(1)',
-                }}
-              >
-                <Piece
-                  pieceId={pieceId}
-                  imageUrl={imageUrl}
-                  size={PIECE_PX}
-                  onClick={() => move(pos)}
-                  isMovable={movable}
-                  isCorrect={correct}
-                />
-              </div>
-            )
-          })}
+                if (isEmpty) {
+                  return (
+                    <div
+                      key={pos}
+                      style={{
+                        width: PIECE_PX,
+                        height: PIECE_PX,
+                        borderRadius: 3,
+                        background: 'rgba(139,46,46,0.07)',
+                        border: '2px dashed rgba(139,46,46,0.2)',
+                      }}
+                    />
+                  )
+                }
+
+                return (
+                  <div
+                    key={pos}
+                    style={{
+                      transition: 'transform 0.1s',
+                      transform: movable ? 'scale(1.03)' : 'scale(1)',
+                    }}
+                  >
+                    <Piece
+                      pieceId={pieceId}
+                      imageUrl={imageUrl}
+                      size={PIECE_PX}
+                      onClick={() => move(pos)}
+                      isMovable={movable}
+                      isCorrect={pieceId === pos}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Initial state hint */}
       {!started && (
         <p className="text-center text-sm text-[#a06060] font-playfair">
-          Tekan <strong>Acak</strong> untuk mulai bermain ✨
+          Tekan <strong>Acak</strong> untuk mulai ✨
         </p>
       )}
       {started && !won && (
         <p className="text-center text-xs text-[#c9a0a0]">
-          Klik piece yang bersebelahan dengan kotak kosong untuk menggesernya
+          Klik piece yang bersebelahan dengan kotak kosong untuk menggeser
         </p>
       )}
     </div>
