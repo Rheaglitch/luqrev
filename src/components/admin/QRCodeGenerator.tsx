@@ -193,8 +193,7 @@ export default function QRCodeGenerator({ siteUrl }: Props) {
               <path d={heartClipPath} fill={bgColor} stroke={color} strokeWidth="1"/>
               {/* QR code clipped to heart */}
               <foreignObject width="100" height="100" clipPath="url(#heartQR)">
-                <div xmlns="http://www.w3.org/1999/xhtml"
-                  style={{ width: '100px', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '100px', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <QRCodeSVG
                     value={url || 'https://example.com'}
                     size={100}
