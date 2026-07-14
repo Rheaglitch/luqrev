@@ -180,31 +180,39 @@ export default function QRCodeGenerator({ siteUrl }: Props) {
               includeMargin
             />
           ) : (
-            // Heart-shaped QR using SVG clipPath
-            <svg width="220" height="220" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <clipPath id="heartQR">
-                  <path d={heartClipPath}/>
-                </clipPath>
-              </defs>
-              {/* Background */}
-              <rect width="100" height="100" fill={bgColor}/>
-              {/* Heart fill */}
-              <path d={heartClipPath} fill={bgColor} stroke={color} strokeWidth="1"/>
-              {/* QR code clipped to heart */}
-              <foreignObject width="100" height="100" clipPath="url(#heartQR)">
-                <div style={{ width: '100px', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            // Heart-shaped border around QR — QR tetap kotak agar bisa di-scan
+            <svg width="260" height="270" viewBox="0 0 260 270" xmlns="http://www.w3.org/2000/svg">
+              {/* White background */}
+              <rect width="260" height="270" fill={bgColor}/>
+
+              {/* Heart border decoration */}
+              <path
+                d="M130,240 C130,240 20,170 20,90 C20,50 48,28 75,28 C97,28 115,40 130,58 C145,40 163,28 185,28 C212,28 240,50 240,90 C240,170 130,240 130,240 Z"
+                fill="none"
+                stroke={color}
+                strokeWidth="6"
+                opacity="0.35"
+              />
+
+              {/* QR code centered — fully intact, scannable */}
+              <foreignObject x="25" y="25" width="210" height="210">
+                <div style={{ width:'210px', height:'210px' }}>
                   <QRCodeSVG
                     value={url || 'https://example.com'}
-                    size={100}
+                    size={210}
                     fgColor={color}
                     bgColor="transparent"
                     level="H"
+                    includeMargin
                   />
                 </div>
               </foreignObject>
-              {/* Heart border overlay */}
-              <path d={heartClipPath} fill="none" stroke={color} strokeWidth="1.5"/>
+
+              {/* Small hearts at corners for decoration */}
+              {[[20,15],[240,15],[20,255],[240,255]].map(([x,y],i)=>(
+                <text key={i} x={x} y={y} textAnchor="middle" fontSize="12"
+                  fill={color} opacity="0.5">♥</text>
+              ))}
             </svg>
           )}
 
