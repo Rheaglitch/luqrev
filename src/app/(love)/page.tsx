@@ -36,11 +36,20 @@ export default async function HomePage() {
     <div className="pb-8">
 
       {/* ── Section 1: Slideshow + Momen ── */}
-      {/* Slideshow pakai aspect-video (16:9) supaya foto tidak terpotong */}
-      <section className="flex gap-0 w-full">
+      {/* Mobile: slideshow full width, momen di bawah. Desktop: side by side */}
+      <section className="w-full">
+        {/* Slideshow full width di mobile, 65% di desktop */}
+        <div className="flex flex-col sm:flex-row gap-0 w-full">
 
-        {/* Slideshow — 65% lebar, tinggi mengikuti aspek rasio */}
-        <div className="relative min-w-0" style={{ width: '65%', aspectRatio: '4/3' }}>
+          <div className="relative w-full sm:w-[65%] min-w-0" style={{ aspectRatio: '4/3' }}>
+            {slides.length > 0 ? (
+              <Slideshow slides={slides} />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-[#f5e8e8]">
+                <p className="text-[#a06060] text-sm font-playfair">Upload foto dari admin ~</p>
+              </div>
+            )}
+          </div>
           {slides.length > 0 ? (
             <Slideshow slides={slides} />
           ) : (
@@ -50,10 +59,9 @@ export default async function HomePage() {
           )}
         </div>
 
-        {/* Momen — 35% lebar, tinggi mengikuti slideshow */}
-        <div
-          className="flex-1 flex flex-col overflow-hidden bg-[#fdf6f6]"
-        >
+          {/* Momen — full width di mobile, 35% di desktop */}
+          <div className="flex-1 flex flex-col bg-[#fdf6f6] sm:max-h-none"
+            style={{ maxHeight: 260 }}>
           <div className="px-4 pt-4 pb-2 flex items-center justify-between flex-shrink-0 border-b border-rose-100">
             <h2 className="font-playfair text-base font-bold text-[#3d0c0c]">Momen Spesial</h2>
             <Link href="/events" className="text-xs text-rose-400 hover:text-rose-600 transition-colors flex items-center gap-0.5">
@@ -107,6 +115,7 @@ export default async function HomePage() {
               </>
             )}
           </div>
+
         </div>
       </section>
 
