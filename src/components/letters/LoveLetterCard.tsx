@@ -145,39 +145,16 @@ export default function LoveLetterCard({ letter, onClose }: Props) {
               ) : <div />}
             </div>
 
-            {/* Stamps */}
-            <div className="flex gap-2 flex-shrink-0">
-              {[letter.stamp1_url, letter.stamp2_url].map((s, i) => (
-                <div key={i}
-                  className="relative overflow-hidden"
-                  style={{
-                    width: 52, height: 60,
-                    border: '1.5px solid #c9a080',
-                    background: s ? 'transparent' : '#f0e8d8',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {s ? (
-                    <Image src={s} alt="stamp" fill className="object-contain p-1" sizes="52px" />
-                  ) : (
-                    <span style={{ fontSize: 18, opacity: 0.2 }}>♥</span>
-                  )}
-                  <div style={{
-                    position: 'absolute', bottom: 0, left: 0, right: 0,
-                    background: 'rgba(139,32,32,0.75)',
-                    fontSize: '0.45rem',
-                    color: 'white',
-                    textAlign: 'center',
-                    padding: '1px 0',
-                    letterSpacing: '0.05em',
-                    fontFamily: 'var(--font-lato)',
-                  }}>POSTAGE</div>
+          {/* Stamps — tampil langsung tanpa border/postage */}
+          <div className="flex gap-3 flex-shrink-0">
+            {[letter.stamp1_url, letter.stamp2_url].map((s, i) =>
+              s ? (
+                <div key={i} className="relative flex-shrink-0" style={{ width: 52, height: 64 }}>
+                  <Image src={s} alt="stamp" fill className="object-contain" sizes="52px" />
                 </div>
-              ))}
-            </div>
+              ) : null
+            )}
+          </div>
           </div>
 
           {/* Divider */}
