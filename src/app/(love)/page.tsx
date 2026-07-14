@@ -36,11 +36,10 @@ export default async function HomePage() {
     <div className="pb-8">
 
       {/* ── Section 1: Slideshow + Momen ── */}
-      {/* Mobile: slideshow full width, momen di bawah. Desktop: side by side */}
       <section className="w-full">
-        {/* Slideshow full width di mobile, 65% di desktop */}
         <div className="flex flex-col sm:flex-row gap-0 w-full">
 
+          {/* Slideshow */}
           <div className="relative w-full sm:w-[65%] min-w-0 overflow-hidden" style={{ aspectRatio: '4/3' }}>
             {slides.length > 0 ? (
               <Slideshow slides={slides} />
@@ -50,14 +49,6 @@ export default async function HomePage() {
               </div>
             )}
           </div>
-          {slides.length > 0 ? (
-            <Slideshow slides={slides} />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-[#f5e8e8]">
-              <p className="text-[#a06060] text-sm font-playfair">Upload foto dari admin ~</p>
-            </div>
-          )}
-        </div>
 
           {/* Momen — full width di mobile, 35% di desktop */}
           <div className="flex-1 flex flex-col bg-[#fdf6f6] sm:max-h-none"
