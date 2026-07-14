@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
-import { X, Check } from 'lucide-react'
+import { X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -114,36 +113,61 @@ export default function NewLetterModal({ stamps, onClose }: Props) {
             <input type="date" className={inp} value={form.letter_date} onChange={e => set('letter_date', e.target.value)} />
           </div>
 
-          {/* Stamp picker */}
+          {/* Stamp picker — carousel */}
           {stamps.length > 0 && (
             <div>
-              <label className="block text-xs text-[#a06060] mb-2">Pilih perangko (maks. 2)</label>
-              <div className="flex flex-wrap gap-2">
+              <label className="block text-xs text-[#a06060] mb-2">
+                Pilih perangko (maks. 2) — geser untuk lihat semua
+              </label>
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
                 {stamps.map(s => {
                   const sel = form.stamp1_url === s.image_url || form.stamp2_url === s.image_url
+                  const selNum = form.stamp1_url === s.image_url ? 1 : form.stamp2_url === s.image_url ? 2 : null
                   return (
-                    <button key={s.id} type="button" onClick={() => toggleStamp(s.image_url)}
-                      className="relative rounded-lg overflow-hidden transition-all"
-                      style={{
-                        width: 52, height: 60,
-                        border: sel ? '2px solid #8b2e2e' : '1.5px solid #c9a0a0',
-                        background: '#f5e8e8',
-                      }}>
-                      <Image src={s.image_url} alt={s.name} fill className="object-contain p-0.5" sizes="52px" />
-                      {sel && (
-                        <div className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full flex items-center justify-center"
-                          style={{ background: '#8b2e2e' }}>
-                          <Check className="w-2.5 h-2.5 text-white" />
-                        </div>
-                      )}
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => toggleStamp(s.image_url)}
+                      className="relative flex-shrink-0 flex flex-col items-center gap-1 transition-all"
+                      style={{ width: 64 }}
+                    >
+                      <div
+                        className="relative rounded-xl overflow-hidden transition-all"
+                        style={{
+                          width: 60, height: 72,
+                          border: sel ? '2.5px solid #8b2020' : '1.5px solid #c9a0a0',
+                          background: '#fdf6f6',
+                          transform: sel ? 'scale(1.05)' : 'scale(1)',
+                          backgroundImage: 'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAIElEQVQoU2NkYGD4z8BQDwAEgAF/QualIQAAAABJRU5ErkJggg==")',
+                        }}
+                      >
+                        <img src={s.image_url} alt={s.name} className="w-full h-full object-contain p-1" />
+                        {/* Selection badge */}
+                        {selNum && (
+                          <div className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
+                            style={{ background: '#8b2020' }}>
+                            {selNum}
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-[9px] text-[#a06060] text-center truncate w-full">{s.name}</p>
                     </button>
                   )
                 })}
               </div>
               {(form.stamp1_url || form.stamp2_url) && (
-                <p className="text-xs text-[#a06060] mt-1">
-                  {[form.stamp1_url, form.stamp2_url].filter(Boolean).length} perangko dipilih
-                </p>
+                <div className="flex gap-2 mt-1.5">
+                  {[form.stamp1_url, form.stamp2_url].map((url, i) => url && (
+                    <div key={i} className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs"
+                      style={{ background: '#f5e8e8', color: '#6b2020' }}>
+                      <span>Perangko {i + 1}</span>
+                      <button type="button" onClick={() => {
+                        if (i === 0) setForm(f => ({ ...f, stamp1_url: '' }))
+                        else setForm(f => ({ ...f, stamp2_url: '' }))
+                      }} className="text-[#c9a0a0] hover:text-[#8b2020] ml-1">×</button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           )}

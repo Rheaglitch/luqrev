@@ -150,9 +150,14 @@ export async function upsertLetter(formData: FormData) {
 
   const id = formData.get('id') as string | null
   const payload = {
-    title: formData.get('title') as string,
-    content: formData.get('content') as string,
-    letter_date: formData.get('letter_date') as string,
+    title:       (formData.get('title')       as string)?.trim() || null,
+    content:     formData.get('content')      as string,
+    letter_date: formData.get('letter_date')  as string,
+    to_name:     (formData.get('to_name')     as string)?.trim() || null,
+    from_name:   (formData.get('from_name')   as string)?.trim() || null,
+    greeting:    (formData.get('greeting')    as string)?.trim() || null,
+    stamp1_url:  (formData.get('stamp1_url')  as string)?.trim() || null,
+    stamp2_url:  (formData.get('stamp2_url')  as string)?.trim() || null,
   }
 
   if (id) {
