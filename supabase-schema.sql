@@ -90,6 +90,7 @@ create table if not exists love_scrapbook_pages (
   storage_path text not null,
   public_url   text not null,
   caption      text,
+  file_type    text,
   created_at   timestamptz default now()
 );
 
