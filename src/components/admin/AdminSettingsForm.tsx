@@ -22,6 +22,7 @@ export default function AdminSettingsForm({ settings, action }: Props) {
     header_photo_right2: settings.header_photo_right2 ?? '',
     music_cover_url:     settings.music_cover_url     ?? '',
     music_url:           settings.music_url           ?? '',
+    puzzle_image_url:    settings.puzzle_image_url    ?? '',
   })
 
   const handleUploaded = (key: string, url: string) => {
@@ -176,6 +177,21 @@ export default function AdminSettingsForm({ settings, action }: Props) {
         {themeSection('blue',  'Biru',  '💙', 'border-blue-200 text-blue-700')}
         {themeSection('red',   'Merah', '❤️', 'border-red-200 text-red-700')}
         {themeSection('pink',  'Pink',  '🩷', 'border-pink-200 text-pink-700')}
+      </section>
+
+      {/* Puzzle game */}
+      <section className="bg-white rounded-2xl p-5 border border-rose-100 space-y-4">
+        <h2 className="font-medium text-rose-700">🧩 Puzzle Hati</h2>
+        <PhotoUploadField
+          label="Foto untuk puzzle (akan dipotong jadi 16 pieces)"
+          settingKey="puzzle_image_url"
+          currentUrl={photoUrls.puzzle_image_url ?? ''}
+          folder="game"
+          onUploaded={handleUploaded}
+        />
+        <p className="text-xs text-rose-300">
+          Upload foto kenangan — foto ini yang akan muncul di dalam puzzle bentuk hati.
+        </p>
       </section>
 
       {state?.success && (

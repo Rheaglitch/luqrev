@@ -229,28 +229,29 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: 'Tic-Tac-Toe', emoji: null, grid: ['♥','','○','','♥','','○','','♥'], bg: 'linear-gradient(135deg, #3d0c0c, #6b2020)' },
             { label: 'Ular Tangga', emoji: '🐍', grid: null, bg: 'linear-gradient(135deg, #6b2020, #8b4040)' },
-            { label: 'Catur',       emoji: '♟', grid: null, bg: 'linear-gradient(135deg, #2a0808, #4a1a10)' },
+            { label: 'Catur',       emoji: '♟',  grid: null, bg: 'linear-gradient(135deg, #2a0808, #4a1a10)' },
+            { label: 'Puzzle Hati', emoji: '🧩', grid: null, bg: 'linear-gradient(135deg, #6b1a3a, #3d0c1c)' },
           ].map(g => (
             <Link key={g.label} href="/game">
-              <div className="rounded-2xl overflow-hidden shadow-sm aspect-square flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] transition-transform"
+              <div className="rounded-2xl overflow-hidden shadow-sm aspect-square flex flex-col items-center justify-center gap-3 cursor-pointer hover:scale-[1.02] transition-transform"
                 style={{ background: g.bg }}>
                 {g.grid ? (
-                  <div className="grid grid-cols-3 gap-0.5">
+                  <div className="grid grid-cols-3 gap-1">
                     {g.grid.map((c, i) => (
-                      <div key={i} className="w-3.5 h-3.5 rounded-sm flex items-center justify-center text-[7px] font-bold"
-                        style={{ background: 'rgba(255,255,255,0.1)', color: c === '♥' ? '#ffb3b3' : '#b3d4ff' }}>
+                      <div key={i} className="w-5 h-5 rounded-sm flex items-center justify-center text-[9px] font-bold"
+                        style={{ background: 'rgba(255,255,255,0.12)', color: c === '♥' ? '#ffb3b3' : '#b3d4ff' }}>
                         {c}
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <span className="text-2xl">{g.emoji}</span>
+                  <span className="text-3xl">{g.emoji}</span>
                 )}
-                <p className="text-white text-[10px] font-medium px-1 text-center">{g.label}</p>
+                <p className="text-white text-xs font-medium px-2 text-center">{g.label}</p>
               </div>
             </Link>
           ))}

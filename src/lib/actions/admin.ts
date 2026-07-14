@@ -41,6 +41,7 @@ export async function updateSettings(_prevState: { success?: boolean } | undefin
     'header_photo_left1', 'header_photo_left2',
     'header_photo_right1', 'header_photo_right2',
     'music_title', 'music_artist', 'music_url', 'music_cover_url',
+    'puzzle_image_url',
   ]
 
   for (const key of updates) {
