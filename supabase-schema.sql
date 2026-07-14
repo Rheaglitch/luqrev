@@ -181,3 +181,27 @@ create policy "admin write quiz"           on love_quiz           for all  using
 -- ============================================================
 
 -- insert into storage.buckets (id, name, public) values ('love-media', 'love-media', true);
+
+-- ============================================================
+-- Love Letter enhancements
+-- ============================================================
+
+-- 10. Postage stamps (admin uploads)
+CREATE TABLE IF NOT EXISTS love_stamps (
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null,
+  image_url  text not null,
+  created_at timestamptz default now()
+);
+
+ALTER TABLE love_stamps ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public read stamps"  ON love_stamps FOR SELECT USING (true);
+CREATE POLICY "admin write stamps"  ON love_stamps FOR ALL    USING (auth.role() = 'authenticated');
+
+-- Add new columns to love_letters for love letter fields
+ALTER TABLE love_letters ADD COLUMN IF NOT EXISTS to_name      text;
+ALTER TABLE love_letters ADD COLUMN IF NOT EXISTS from_name    text;
+ALTER TABLE love_letters ADD COLUMN IF NOT EXISTS greeting     text;
+ALTER TABLE love_letters ADD COLUMN IF NOT EXISTS stamp1_url   text;
+ALTER TABLE love_letters ADD COLUMN IF NOT EXISTS stamp2_url   text;
+ALTER TABLE love_letters ADD COLUMN IF NOT EXISTS created_by   text default 'user';

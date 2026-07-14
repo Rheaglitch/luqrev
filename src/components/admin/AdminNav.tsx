@@ -4,17 +4,18 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Settings, Image as ImageIcon, BookOpen, Grid3X3,
-  Calendar, Mail, LogOut, Heart, Gamepad2,
+  Calendar, Mail, LogOut, Heart, Gamepad2, Stamp,
 } from 'lucide-react'
 
 const links = [
-  { href: '/reva-admin', label: 'Pengaturan', icon: Settings },
-  { href: '/reva-admin/slideshow', label: 'Slideshow', icon: ImageIcon },
-  { href: '/reva-admin/gallery', label: 'Galeri', icon: Grid3X3 },
-  { href: '/reva-admin/scrapbook', label: 'Scrapbook', icon: BookOpen },
-  { href: '/reva-admin/events', label: 'Momen', icon: Calendar },
-  { href: '/reva-admin/game', label: 'Truth & Dare', icon: Gamepad2 },
-  { href: '/reva-admin/letters', label: 'Surat', icon: Mail },
+  { href: '/reva-admin',          label: 'Pengaturan',  icon: Settings  },
+  { href: '/reva-admin/slideshow', label: 'Slideshow',   icon: ImageIcon },
+  { href: '/reva-admin/gallery',   label: 'Galeri',      icon: Grid3X3   },
+  { href: '/reva-admin/scrapbook', label: 'Scrapbook',   icon: BookOpen  },
+  { href: '/reva-admin/events',    label: 'Momen',       icon: Calendar  },
+  { href: '/reva-admin/game',      label: 'Truth & Dare',icon: Gamepad2  },
+  { href: '/reva-admin/letters',   label: 'Surat',       icon: Mail      },
+  { href: '/reva-admin/stamps',    label: 'Perangko',    icon: Stamp     },
 ]
 
 interface Props {

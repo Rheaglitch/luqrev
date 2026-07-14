@@ -1,16 +1,20 @@
-import { getLetters } from '@/lib/data'
-import LetterList from '@/components/letters/LetterList'
+import { createClient } from '@/lib/supabase/server'
+import LetterPageClient from '@/components/letters/LetterPageClient'
 
-export const metadata = { title: 'Surat Untukmu' }
+export const metadata = { title: 'Love Letters 💌' }
 
 export default async function LettersPage() {
-  const letters = await getLetters()
+  const supabase = await createClient()
+
+  const [{ data: letters }, { data: stamps }] = await Promise.all([
+    supabase.from('love_letters').select('*').order('letter_date', { ascending: false }),
+    supabase.from('love_stamps').select('*').order('created_at', { ascending: true }),
+  ])
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="font-playfair text-3xl text-rose-800 mb-2">Surat Untukmu</h1>
-      <p className="text-rose-400 mb-8 text-sm">Kata-kata yang tidak selalu bisa aku ucapkan 💌</p>
-      <LetterList letters={letters} />
-    </div>
+    <LetterPageClient
+      letters={letters ?? []}
+      stamps={stamps ?? []}
+    />
   )
 }

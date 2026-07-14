@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Playfair_Display, Lato } from 'next/font/google'
+import { Playfair_Display, Lato, Dancing_Script } from 'next/font/google'
 import './globals.css'
 
 const playfair = Playfair_Display({
@@ -15,6 +15,12 @@ const lato = Lato({
   display: 'swap',
 })
 
+const dancing = Dancing_Script({
+  variable: '--font-dancing',
+  subsets: ['latin'],
+  display: 'swap',
+})
+
 export const metadata: Metadata = {
   title: 'Luqrev',
   description: 'A private space just for us',
@@ -23,7 +29,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" className={`${playfair.variable} ${lato.variable}`}>
+    <html lang="id" className={`${playfair.variable} ${lato.variable} ${dancing.variable}`}>
       <body className="min-h-screen bg-rose-50 text-rose-900 font-lato antialiased">
         {children}
       </body>
