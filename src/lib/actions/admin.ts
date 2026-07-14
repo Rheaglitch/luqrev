@@ -42,6 +42,7 @@ export async function updateSettings(_prevState: { success?: boolean } | undefin
     'header_photo_right1', 'header_photo_right2',
     'music_title', 'music_artist', 'music_url', 'music_cover_url',
     'puzzle_image_url',
+    'qr_url', 'qr_label', 'qr_sublabel', 'qr_color', 'qr_bg_color', 'qr_shape',
   ]
 
   for (const key of updates) {

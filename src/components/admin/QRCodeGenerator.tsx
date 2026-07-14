@@ -1,44 +1,60 @@
 'use client'
 
-import { useRef, useState } from 'react'
-import { QRCodeSVG } from 'qrcode.react'
-import { Download, Printer, Heart } from 'lucide-react'
+import { useRef, useState, useTransition, useEffect, useMemo } from 'react'
+import QRCodeLib from 'qrcode'
+import { Download, Printer, Heart, Save } from 'lucide-react'
+import { updateSettings } from '@/lib/actions/admin'
 
 interface Props {
-  siteUrl: string
+  settings: Record<string, string>
+  fallbackUrl: string
 }
 
-export default function QRCodeGenerator({ siteUrl }: Props) {
-  const [url, setUrl] = useState(siteUrl)
-  const [color, setColor] = useState('#8b2020')
-  const [bgColor, setBgColor] = useState('#ffffff')
-  const [label, setLabel] = useState('Scan untuk membuka')
-  const [sublabel, setSublabel] = useState('Luqrev — A private space just for us 💕')
-  const [shape, setShape] = useState<'square' | 'heart'>('heart')
+export default function QRCodeGenerator({ settings, fallbackUrl }: Props) {
+  const [url, setUrl]           = useState(settings.qr_url       || fallbackUrl)
+  const [color, setColor]       = useState(settings.qr_color     || '#8b2020')
+  const [bgColor, setBgColor]   = useState(settings.qr_bg_color  || '#ffffff')
+  const [label, setLabel]       = useState(settings.qr_label     || 'Scan untuk membuka')
+  const [sublabel, setSublabel] = useState(settings.qr_sublabel  || 'Luqrev — A private space just for us 💕')
+  const [shape, setShape]       = useState<'square' | 'heart'>((settings.qr_shape as 'square' | 'heart') || 'heart')
+  const [saved, setSaved]       = useState(false)
+  const [isPending, startTransition] = useTransition()
   const printRef = useRef<HTMLDivElement>(null)
+
+  const handleSave = () => {
+    setSaved(false)
+    const fd = new FormData()
+    fd.set('qr_url',      url)
+    fd.set('qr_label',    label)
+    fd.set('qr_sublabel', sublabel)
+    fd.set('qr_color',    color)
+    fd.set('qr_bg_color', bgColor)
+    fd.set('qr_shape',    shape)
+    startTransition(async () => {
+      await updateSettings(undefined, fd)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    })
+  }
 
   const handlePrint = () => {
     if (!printRef.current) return
-    const content = printRef.current.innerHTML
+    const svgEl = printRef.current.querySelector('svg')
+    if (!svgEl) return
+    const serializer = new XMLSerializer()
+    const svgStr = serializer.serializeToString(svgEl)
     const win = window.open('', '_blank', 'width=600,height=700')
     if (!win) return
     win.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
+      <!DOCTYPE html><html><head>
         <title>QR Code — Luqrev</title>
-        <style>
-          body { margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: white; font-family: serif; }
-          .container { text-align: center; padding: 40px; }
-          @media print { body { margin: 0; } }
-        </style>
-      </head>
-      <body>
-        <div class="container">${content}</div>
-        <script>window.onload = () => { window.print(); window.close(); }</script>
-      </body>
-      </html>
-    `)
+        <style>body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:white;font-family:serif;gap:12px;}@media print{body{margin:0;}}</style>
+      </head><body>
+        ${label ? `<p style="font-family:serif;font-size:1rem;color:${color};font-weight:600;">${label}</p>` : ''}
+        ${svgStr}
+        ${sublabel ? `<p style="font-family:serif;font-size:0.75rem;color:#888;">${sublabel}</p>` : ''}
+        <script>window.onload=()=>{window.print();window.close();}<\/script>
+      </body></html>`)
     win.document.close()
   }
 
@@ -59,43 +75,29 @@ export default function QRCodeGenerator({ siteUrl }: Props) {
     if (!printRef.current) return
     const svgEl = printRef.current.querySelector('svg')
     if (!svgEl) return
-
-    const size = 400
+    const size = 500
     const serializer = new XMLSerializer()
     const svgStr = serializer.serializeToString(svgEl)
     const img = new window.Image()
     img.width = size; img.height = size
     img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgStr)))
     await new Promise(r => { img.onload = r })
-
     const canvas = document.createElement('canvas')
     canvas.width = size; canvas.height = size
     const ctx = canvas.getContext('2d')!
     ctx.fillStyle = bgColor
     ctx.fillRect(0, 0, size, size)
     ctx.drawImage(img, 0, 0, size, size)
-
     const a = document.createElement('a')
     a.href = canvas.toDataURL('image/png')
     a.download = 'luqrev-qr.png'
     a.click()
   }
 
-  // Heart clip-path for SVG (normalized 0-100)
-  const heartClipPath = `
-    M 50,85
-    C 50,85 5,55 5,30
-    C 5,15 17,5 30,5
-    C 38,5 45,10 50,17
-    C 55,10 62,5 70,5
-    C 83,5 95,15 95,30
-    C 95,55 50,85 50,85 Z
-  `
-
   return (
     <div className="max-w-xl space-y-6">
       <h1 className="font-playfair text-2xl text-rose-800">QR Code Luqrev</h1>
-      <p className="text-rose-400 text-sm">Generate QR code untuk dibagikan atau dicetak. Scan akan langsung ke halaman masuk web.</p>
+      <p className="text-rose-400 text-sm">Generate QR code untuk dibagikan atau dicetak.</p>
 
       {/* Settings */}
       <div className="bg-white rounded-2xl p-5 border border-rose-100 space-y-4">
@@ -106,13 +108,11 @@ export default function QRCodeGenerator({ siteUrl }: Props) {
           <input value={url} onChange={e => setUrl(e.target.value)}
             className="w-full px-4 py-2.5 rounded-xl border border-rose-200 bg-rose-50 text-sm text-rose-800 focus:outline-none focus:ring-2 focus:ring-rose-300"/>
         </div>
-
         <div>
           <label className="block text-xs text-rose-400 mb-1">Teks label atas</label>
           <input value={label} onChange={e => setLabel(e.target.value)}
             className="w-full px-4 py-2.5 rounded-xl border border-rose-200 bg-rose-50 text-sm text-rose-800 focus:outline-none focus:ring-2 focus:ring-rose-300"/>
         </div>
-
         <div>
           <label className="block text-xs text-rose-400 mb-1">Teks label bawah</label>
           <input value={sublabel} onChange={e => setSublabel(e.target.value)}
@@ -146,77 +146,41 @@ export default function QRCodeGenerator({ siteUrl }: Props) {
             {(['square', 'heart'] as const).map(s => (
               <button key={s} onClick={() => setShape(s)}
                 className="flex-1 py-2 rounded-xl text-sm font-medium transition-colors"
-                style={{
-                  background: shape === s ? '#8b2020' : '#f5e8e8',
-                  color: shape === s ? 'white' : '#6b2020',
-                }}>
+                style={{ background: shape === s ? '#8b2020' : '#f5e8e8', color: shape === s ? 'white' : '#6b2020' }}>
                 {s === 'square' ? '⬛ Kotak' : '❤️ Hati'}
               </button>
             ))}
           </div>
         </div>
+
+        {/* ── SAVE BUTTON ── */}
+        <button
+          onClick={handleSave}
+          disabled={isPending}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white text-sm font-semibold transition-all disabled:opacity-60 hover:opacity-90"
+          style={{ background: saved ? '#16a34a' : '#8b2020' }}
+        >
+          <Save className="w-4 h-4"/>
+          {isPending ? 'Menyimpan...' : saved ? 'Tersimpan ✅' : 'Simpan Pengaturan QR'}
+        </button>
       </div>
 
       {/* Preview */}
       <div className="bg-white rounded-2xl p-6 border border-rose-100 flex flex-col items-center gap-4">
         <h2 className="font-medium text-rose-700 self-start">Preview</h2>
 
-        <div ref={printRef} style={{ textAlign: 'center', padding: 16 }}>
-          {/* Label atas */}
+        <div ref={printRef} style={{ textAlign: 'center' }}>
           {label && (
-            <p style={{ fontFamily: 'serif', fontSize: '1rem', color: color, marginBottom: 12, fontWeight: 600 }}>
+            <p style={{ fontFamily: 'serif', fontSize: '1rem', color, marginBottom: 12, fontWeight: 600 }}>
               {label}
             </p>
           )}
 
-          {/* QR Code */}
-          {shape === 'square' ? (
-            <QRCodeSVG
-              value={url || 'https://example.com'}
-              size={220}
-              fgColor={color}
-              bgColor={bgColor}
-              level="H"
-              includeMargin
-            />
-          ) : (
-            // Heart-shaped border around QR — QR tetap kotak agar bisa di-scan
-            <svg width="260" height="270" viewBox="0 0 260 270" xmlns="http://www.w3.org/2000/svg">
-              {/* White background */}
-              <rect width="260" height="270" fill={bgColor}/>
+          {shape === 'square'
+            ? <SquareQR url={url} color={color} bgColor={bgColor} />
+            : <HeartQR  url={url} color={color} bgColor={bgColor} />
+          }
 
-              {/* Heart border decoration */}
-              <path
-                d="M130,240 C130,240 20,170 20,90 C20,50 48,28 75,28 C97,28 115,40 130,58 C145,40 163,28 185,28 C212,28 240,50 240,90 C240,170 130,240 130,240 Z"
-                fill="none"
-                stroke={color}
-                strokeWidth="6"
-                opacity="0.35"
-              />
-
-              {/* QR code centered — fully intact, scannable */}
-              <foreignObject x="25" y="25" width="210" height="210">
-                <div style={{ width:'210px', height:'210px' }}>
-                  <QRCodeSVG
-                    value={url || 'https://example.com'}
-                    size={210}
-                    fgColor={color}
-                    bgColor="transparent"
-                    level="H"
-                    includeMargin
-                  />
-                </div>
-              </foreignObject>
-
-              {/* Small hearts at corners for decoration */}
-              {[[20,15],[240,15],[20,255],[240,255]].map(([x,y],i)=>(
-                <text key={i} x={x} y={y} textAnchor="middle" fontSize="12"
-                  fill={color} opacity="0.5">♥</text>
-              ))}
-            </svg>
-          )}
-
-          {/* Label bawah */}
           {sublabel && (
             <p style={{ fontFamily: 'serif', fontSize: '0.75rem', color: '#888', marginTop: 12 }}>
               {sublabel}
@@ -224,10 +188,9 @@ export default function QRCodeGenerator({ siteUrl }: Props) {
           )}
         </div>
 
-        {/* Action buttons */}
         <div className="flex gap-2 flex-wrap justify-center w-full">
           <button onClick={handlePrint}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-all hover:scale-[1.02]"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-medium hover:opacity-90 transition-opacity"
             style={{ background: '#8b2020' }}>
             <Printer className="w-4 h-4"/> Cetak
           </button>
@@ -248,4 +211,173 @@ export default function QRCodeGenerator({ siteUrl }: Props) {
       </div>
     </div>
   )
+}
+
+// ─── helpers: get QR module matrix via qrcode lib ────────────────────────────
+
+function useQRMatrix(url: string) {
+  const [matrix, setMatrix] = useState<boolean[][]>([])
+  useEffect(() => {
+    let cancelled = false
+    QRCodeLib.create(url || 'https://example.com', { errorCorrectionLevel: 'H' })
+      .then(qr => {
+        if (cancelled) return
+        const size = qr.modules.size
+        const data = qr.modules.data
+        const rows: boolean[][] = []
+        for (let r = 0; r < size; r++) {
+          const row: boolean[] = []
+          for (let c = 0; c < size; c++) {
+            row.push(!!data[r * size + c])
+          }
+          rows.push(row)
+        }
+        setMatrix(rows)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [url])
+  return matrix
+}
+
+// ─── Square QR — pure SVG rects ──────────────────────────────────────────────
+
+function SquareQR({ url, color, bgColor }: { url: string; color: string; bgColor: string }) {
+  const matrix = useQRMatrix(url)
+  if (!matrix.length) return <div style={{ width: 220, height: 220, background: bgColor }} />
+
+  const SIZE = 220
+  const n = matrix.length
+  const cell = SIZE / n
+  const margin = cell * 2
+
+  return (
+    <svg width={SIZE + margin * 2} height={SIZE + margin * 2}
+      viewBox={`0 0 ${SIZE + margin * 2} ${SIZE + margin * 2}`}
+      xmlns="http://www.w3.org/2000/svg">
+      <rect width={SIZE + margin * 2} height={SIZE + margin * 2} fill={bgColor} />
+      {matrix.flatMap((row, r) =>
+        row.map((on, c) => on ? (
+          <rect key={`${r}-${c}`}
+            x={margin + c * cell} y={margin + r * cell}
+            width={cell} height={cell}
+            fill={color} />
+        ) : null)
+      )}
+    </svg>
+  )
+}
+
+// ─── Heart QR — QR modules in center, decorative noise outside ───────────────
+
+function HeartQR({ url, color, bgColor }: { url: string; color: string; bgColor: string }) {
+  const matrix = useQRMatrix(url)
+
+  const SIZE = 300
+
+  // Heart path
+  const heartD = buildHeartPath(SIZE)
+
+  // Seeded rng
+  const rng = (s: number) => { const x = Math.sin(s + 1) * 10000; return x - Math.floor(x) }
+
+  // Decorative noise tiles outside QR zone but inside heart
+  const CELL = 6
+  const COLS = Math.floor(SIZE / CELL)
+  const ROWS = Math.floor(SIZE / CELL)
+
+  const QR_MARGIN = 4  // extra padding around QR zone
+  // QR zone: center square, 60% of SIZE
+  const QR_DISPLAY = SIZE * 0.60
+  const QR_X = (SIZE - QR_DISPLAY) / 2
+  const QR_Y = (SIZE - QR_DISPLAY) / 2
+
+  const noiseTiles = useMemo(() => {
+    const tiles: { x: number; y: number }[] = []
+    let seed = 0
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLS; col++) {
+        seed++
+        const tx = col * CELL
+        const ty = row * CELL
+        const cx = tx + CELL / 2
+        const cy = ty + CELL / 2
+        if (!isInHeart(cx, cy, SIZE)) continue
+        // skip QR zone
+        if (tx + CELL > QR_X - QR_MARGIN && tx < QR_X + QR_DISPLAY + QR_MARGIN &&
+            ty + CELL > QR_Y - QR_MARGIN && ty < QR_Y + QR_DISPLAY + QR_MARGIN) continue
+        if (rng(seed) > 0.52) continue
+        tiles.push({ x: tx, y: ty })
+      }
+    }
+    return tiles
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [SIZE, CELL, COLS, ROWS, QR_X, QR_Y, QR_DISPLAY, QR_MARGIN])
+
+  // QR rects scaled to QR_DISPLAY
+  const qrRects = useMemo(() => {
+    if (!matrix.length) return []
+    const n = matrix.length
+    const cell = QR_DISPLAY / n
+    const rects: { x: number; y: number; s: number }[] = []
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        if (matrix[r][c]) {
+          rects.push({ x: QR_X + c * cell, y: QR_Y + r * cell, s: cell })
+        }
+      }
+    }
+    return rects
+  }, [matrix, QR_X, QR_Y, QR_DISPLAY])
+
+  return (
+    <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <clipPath id="hqr-clip"><path d={heartD} /></clipPath>
+      </defs>
+
+      {/* Background */}
+      <rect width={SIZE} height={SIZE} fill={bgColor} />
+
+      {/* Noise tiles clipped to heart */}
+      <g clipPath="url(#hqr-clip)">
+        {noiseTiles.map((t, i) => (
+          <rect key={i} x={t.x} y={t.y} width={CELL - 1} height={CELL - 1} fill={color} opacity="0.75" />
+        ))}
+      </g>
+
+      {/* White background for QR zone so noise doesn't bleed through */}
+      <rect x={QR_X - 2} y={QR_Y - 2} width={QR_DISPLAY + 4} height={QR_DISPLAY + 4} fill={bgColor} />
+
+      {/* Actual QR modules */}
+      {qrRects.map((r, i) => (
+        <rect key={i} x={r.x} y={r.y} width={r.s} height={r.s} fill={color} />
+      ))}
+
+      {/* Heart outline on top */}
+      <path d={heartD} fill="none" stroke={color} strokeWidth="2" opacity="0.5" />
+    </svg>
+  )
+}
+
+// ─── heart path helper ────────────────────────────────────────────────────────
+
+function buildHeartPath(S: number): string {
+  const cx = S / 2
+  // Using parametric heart with good symmetry
+  return `
+    M ${cx},${S * 0.85}
+    C ${cx},${S * 0.85} ${S * 0.05},${S * 0.58} ${S * 0.05},${S * 0.35}
+    C ${S * 0.05},${S * 0.14} ${S * 0.22},${S * 0.05} ${S * 0.37},${S * 0.05}
+    C ${S * 0.46},${S * 0.05} ${S * 0.5},${S * 0.12} ${cx},${S * 0.22}
+    C ${S * 0.5},${S * 0.12} ${S * 0.54},${S * 0.05} ${S * 0.63},${S * 0.05}
+    C ${S * 0.78},${S * 0.05} ${S * 0.95},${S * 0.14} ${S * 0.95},${S * 0.35}
+    C ${S * 0.95},${S * 0.58} ${cx},${S * 0.85} ${cx},${S * 0.85} Z
+  `
+}
+
+function isInHeart(px: number, py: number, S: number): boolean {
+  const nx = (px / S - 0.5) * 2
+  const ny = -(py / S - 0.85) * 2.4
+  return (nx * nx + ny * ny - 1) ** 3 - nx * nx * ny * ny * ny < 0
 }
