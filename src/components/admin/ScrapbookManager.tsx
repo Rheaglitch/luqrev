@@ -21,6 +21,8 @@ interface Book {
   title: string
   cover_url: string | null
   sort_order: number
+  template: string | null
+  title_pos: string | null
   love_scrapbook_pages: ScrapPage[]
 }
 
@@ -35,6 +37,12 @@ export default function ScrapbookManager({ books }: Props) {
   const [uploading, setUploading] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
+
+  const updateBookSetting = async (bookId: string, field: 'template' | 'title_pos', value: string) => {
+    const supabase = createClient()
+    await supabase.from('love_scrapbooks').update({ [field]: value }).eq('id', bookId)
+    router.refresh()
+  }
 
   const createBook = async () => {
     if (!newTitle.trim()) return
@@ -146,7 +154,39 @@ export default function ScrapbookManager({ books }: Props) {
             </div>
 
             {isExpanded && (
-              <div className="border-t border-rose-100 p-4 space-y-3">
+              <div className="border-t border-rose-100 p-4 space-y-4">
+
+                {/* Template & title position settings */}
+                <div className="flex gap-3 flex-wrap">
+                  <div className="flex-1 min-w-[140px]">
+                    <label className="block text-xs text-rose-400 mb-1">Template</label>
+                    <select
+                      value={book.template ?? 'standard'}
+                      onChange={e => updateBookSetting(book.id, 'template', e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 text-sm text-rose-800 focus:outline-none focus:ring-2 focus:ring-rose-300"
+                    >
+                      <option value="standard">📖 Standard</option>
+                      <option value="spiral">📓 Spiral Notebook</option>
+                      <option value="binder">📁 Ring Binder</option>
+                    </select>
+                  </div>
+                  <div className="flex-1 min-w-[140px]">
+                    <label className="block text-xs text-rose-400 mb-1">Posisi Judul</label>
+                    <select
+                      value={book.title_pos ?? 'bottom'}
+                      onChange={e => updateBookSetting(book.id, 'title_pos', e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 text-sm text-rose-800 focus:outline-none focus:ring-2 focus:ring-rose-300"
+                    >
+                      <option value="top">↑ Atas Tengah</option>
+                      <option value="bottom">↓ Bawah Tengah</option>
+                      <option value="left">← Kiri Tengah</option>
+                      <option value="right">→ Kanan Tengah</option>
+                      <option value="hidden">✕ Sembunyikan</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Pages grid */}
                 <div className="grid grid-cols-4 gap-2">
                   {pages.sort((a, b) => a.page_number - b.page_number).map((page) => (
                     <div key={page.id} className="relative aspect-[3/4] rounded-lg overflow-hidden bg-rose-50">

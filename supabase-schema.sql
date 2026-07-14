@@ -206,3 +206,7 @@ ALTER TABLE love_letters ADD COLUMN IF NOT EXISTS greeting     text;
 ALTER TABLE love_letters ADD COLUMN IF NOT EXISTS stamp1_url   text;
 ALTER TABLE love_letters ADD COLUMN IF NOT EXISTS stamp2_url   text;
 ALTER TABLE love_letters ADD COLUMN IF NOT EXISTS created_by   text default 'user';
+
+-- Add template and title position to scrapbooks
+ALTER TABLE love_scrapbooks ADD COLUMN IF NOT EXISTS template  text default 'standard';
+ALTER TABLE love_scrapbooks ADD COLUMN IF NOT EXISTS title_pos text default 'bottom';
