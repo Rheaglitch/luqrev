@@ -41,7 +41,7 @@ export default async function HomePage() {
         {/* Slideshow full width di mobile, 65% di desktop */}
         <div className="flex flex-col sm:flex-row gap-0 w-full">
 
-          <div className="relative w-full sm:w-[65%] min-w-0" style={{ aspectRatio: '4/3' }}>
+          <div className="relative w-full sm:w-[65%] min-w-0 overflow-hidden" style={{ aspectRatio: '4/3' }}>
             {slides.length > 0 ? (
               <Slideshow slides={slides} />
             ) : (
