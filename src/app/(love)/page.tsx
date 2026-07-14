@@ -107,7 +107,9 @@ export default async function HomePage() {
             )}
           </div>
 
-        </div>
+          </div>  {/* end momen container */}
+
+        </div>  {/* end flex row */}
       </section>
 
       {/* ── Section 2: Galeri ── */}
