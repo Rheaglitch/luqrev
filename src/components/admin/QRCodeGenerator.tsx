@@ -218,24 +218,22 @@ export default function QRCodeGenerator({ settings, fallbackUrl }: Props) {
 function useQRMatrix(url: string) {
   const [matrix, setMatrix] = useState<boolean[][]>([])
   useEffect(() => {
-    let cancelled = false
-    QRCodeLib.create(url || 'https://example.com', { errorCorrectionLevel: 'H' })
-      .then(qr => {
-        if (cancelled) return
-        const size = qr.modules.size
-        const data = qr.modules.data
-        const rows: boolean[][] = []
-        for (let r = 0; r < size; r++) {
-          const row: boolean[] = []
-          for (let c = 0; c < size; c++) {
-            row.push(!!data[r * size + c])
-          }
-          rows.push(row)
+    try {
+      const qr = QRCodeLib.create(url || 'https://example.com', { errorCorrectionLevel: 'H' })
+      const size = qr.modules.size
+      const data = qr.modules.data
+      const rows: boolean[][] = []
+      for (let r = 0; r < size; r++) {
+        const row: boolean[] = []
+        for (let c = 0; c < size; c++) {
+          row.push(!!data[r * size + c])
         }
-        setMatrix(rows)
-      })
-      .catch(() => {})
-    return () => { cancelled = true }
+        rows.push(row)
+      }
+      setMatrix(rows)
+    } catch {
+      // invalid url, skip
+    }
   }, [url])
   return matrix
 }
