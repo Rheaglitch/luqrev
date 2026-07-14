@@ -266,53 +266,29 @@ function SquareQR({ url, color, bgColor }: { url: string; color: string; bgColor
   )
 }
 
-// ─── Heart QR — QR modules in center, decorative noise outside ───────────────
+// ─── Heart QR ─────────────────────────────────────────────────────────────────
+// - QR asli (kotak) di tengah, ukuran ~50% canvas, fully intact & scannable
+// - Partikel acak menyerupai QR mengisi area hati di luar QR
+// - Clear zone 2px di sekeliling QR agar scanner tidak confused
+// - Border hati = bgColor (tidak kelihatan)
 
 function HeartQR({ url, color, bgColor }: { url: string; color: string; bgColor: string }) {
   const matrix = useQRMatrix(url)
 
-  const SIZE = 300
+  const SIZE = 320
+
+  // QR kotak di tengah — 50% dari SIZE agar tidak melewati batas hati
+  const QR_DISPLAY = SIZE * 0.50
+  const QR_X = (SIZE - QR_DISPLAY) / 2
+  const QR_Y = (SIZE - QR_DISPLAY) / 2 - SIZE * 0.02  // sedikit ke atas agar center di hati
+
+  // Clear zone di sekeliling QR (dalam px), partikel tidak boleh masuk ke sini
+  const CLEAR = 6
 
   // Heart path
   const heartD = buildHeartPath(SIZE)
 
-  // Seeded rng
-  const rng = (s: number) => { const x = Math.sin(s + 1) * 10000; return x - Math.floor(x) }
-
-  // Decorative noise tiles outside QR zone but inside heart
-  const CELL = 6
-  const COLS = Math.floor(SIZE / CELL)
-  const ROWS = Math.floor(SIZE / CELL)
-
-  const QR_MARGIN = 4  // extra padding around QR zone
-  // QR zone: center square, 60% of SIZE
-  const QR_DISPLAY = SIZE * 0.60
-  const QR_X = (SIZE - QR_DISPLAY) / 2
-  const QR_Y = (SIZE - QR_DISPLAY) / 2
-
-  const noiseTiles = useMemo(() => {
-    const tiles: { x: number; y: number }[] = []
-    let seed = 0
-    for (let row = 0; row < ROWS; row++) {
-      for (let col = 0; col < COLS; col++) {
-        seed++
-        const tx = col * CELL
-        const ty = row * CELL
-        const cx = tx + CELL / 2
-        const cy = ty + CELL / 2
-        if (!isInHeart(cx, cy, SIZE)) continue
-        // skip QR zone
-        if (tx + CELL > QR_X - QR_MARGIN && tx < QR_X + QR_DISPLAY + QR_MARGIN &&
-            ty + CELL > QR_Y - QR_MARGIN && ty < QR_Y + QR_DISPLAY + QR_MARGIN) continue
-        if (rng(seed) > 0.52) continue
-        tiles.push({ x: tx, y: ty })
-      }
-    }
-    return tiles
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [SIZE, CELL, COLS, ROWS, QR_X, QR_Y, QR_DISPLAY, QR_MARGIN])
-
-  // QR rects scaled to QR_DISPLAY
+  // QR rects (asli, valid)
   const qrRects = useMemo(() => {
     if (!matrix.length) return []
     const n = matrix.length
@@ -328,41 +304,96 @@ function HeartQR({ url, color, bgColor }: { url: string; color: string; bgColor:
     return rects
   }, [matrix, QR_X, QR_Y, QR_DISPLAY])
 
+  // Partikel dekoratif — acak, di dalam hati, di luar clear zone QR
+  const PCELL = 5  // ukuran tiap partikel
+  const particles = useMemo(() => {
+    const pts: { x: number; y: number; r: number }[] = []
+    const cols = Math.floor(SIZE / PCELL)
+    const rows = Math.floor(SIZE / PCELL)
+    let seed = 7
+    const rng = (s: number) => { const x = Math.sin(s) * 9301 + 49297; return x - Math.floor(x) }
+
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        seed++
+        const tx = col * PCELL
+        const ty = row * PCELL
+        const cx = tx + PCELL / 2
+        const cy = ty + PCELL / 2
+
+        // Hanya di dalam hati
+        if (!isInHeart(cx, cy, SIZE)) continue
+
+        // Jangan masuk clear zone QR
+        if (
+          tx + PCELL > QR_X - CLEAR &&
+          tx < QR_X + QR_DISPLAY + CLEAR &&
+          ty + PCELL > QR_Y - CLEAR &&
+          ty < QR_Y + QR_DISPLAY + CLEAR
+        ) continue
+
+        // ~50% density
+        if (rng(seed) > 0.50) continue
+
+        // radius rounded — variasi kecil biar natural
+        const radius = PCELL * (0.15 + rng(seed + 500) * 0.25)
+        pts.push({ x: tx, y: ty, r: radius })
+      }
+    }
+    return pts
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [SIZE, PCELL, QR_X, QR_Y, QR_DISPLAY, CLEAR])
+
+  if (!matrix.length) {
+    return <div style={{ width: SIZE, height: SIZE, background: bgColor }} />
+  }
+
   return (
     <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <clipPath id="hqr-clip"><path d={heartD} /></clipPath>
+        <clipPath id="hqr-clip">
+          <path d={heartD} />
+        </clipPath>
       </defs>
 
       {/* Background */}
       <rect width={SIZE} height={SIZE} fill={bgColor} />
 
-      {/* Noise tiles clipped to heart */}
+      {/* Partikel dekoratif — clipped ke hati, di luar clear zone QR */}
       <g clipPath="url(#hqr-clip)">
-        {noiseTiles.map((t, i) => (
-          <rect key={i} x={t.x} y={t.y} width={CELL - 1} height={CELL - 1} fill={color} opacity="0.75" />
+        {particles.map((p, i) => (
+          <rect
+            key={i}
+            x={p.x} y={p.y}
+            width={PCELL - 1} height={PCELL - 1}
+            rx={p.r} ry={p.r}
+            fill={color}
+          />
         ))}
       </g>
 
-      {/* White background for QR zone so noise doesn't bleed through */}
-      <rect x={QR_X - 2} y={QR_Y - 2} width={QR_DISPLAY + 4} height={QR_DISPLAY + 4} fill={bgColor} />
+      {/* Heart border — warna sama dengan background = tidak kelihatan */}
+      <path d={heartD} fill="none" stroke={bgColor} strokeWidth="1.5" />
 
-      {/* Actual QR modules */}
+      {/* White background di belakang QR biar partikel tidak tembus */}
+      <rect
+        x={QR_X - CLEAR} y={QR_Y - CLEAR}
+        width={QR_DISPLAY + CLEAR * 2} height={QR_DISPLAY + CLEAR * 2}
+        fill={bgColor}
+      />
+
+      {/* QR asli — kotak, intact, scannable */}
       {qrRects.map((r, i) => (
         <rect key={i} x={r.x} y={r.y} width={r.s} height={r.s} fill={color} />
       ))}
-
-      {/* Heart outline on top */}
-      <path d={heartD} fill="none" stroke={color} strokeWidth="2" opacity="0.5" />
     </svg>
   )
 }
 
-// ─── heart path helper ────────────────────────────────────────────────────────
+// ─── heart path & formula ─────────────────────────────────────────────────────
 
 function buildHeartPath(S: number): string {
   const cx = S / 2
-  // Using parametric heart with good symmetry
   return `
     M ${cx},${S * 0.85}
     C ${cx},${S * 0.85} ${S * 0.05},${S * 0.58} ${S * 0.05},${S * 0.35}
