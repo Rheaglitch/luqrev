@@ -1,140 +1,151 @@
 'use client'
 
-import { useState, useId } from 'react'
-import { ArrowLeft, RotateCcw, Trophy } from 'lucide-react'
+import { useState, useCallback } from 'react'
+import { ArrowLeft, Shuffle, Trophy } from 'lucide-react'
 
 interface Props {
   onBack: () => void
   imageUrl?: string
 }
 
-const COLS = 4
-const ROWS = 3
-const TOTAL = COLS * ROWS  // 12 pieces
-const PIECE_PX = 80        // px per piece on the board
+const SIZE = 4                          // 4×4 grid
+const TOTAL = SIZE * SIZE               // 16 cells
+const EMPTY = TOTAL - 1                 // piece id 15 = empty slot
+const PIECE_PX = 72                     // px per cell
 
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]]
+// ── Solvability check ──────────────────────────────────────────────────────
+// A 4×4 sliding puzzle is solvable if:
+// (inversions even AND blank on odd row from bottom) OR
+// (inversions odd  AND blank on even row from bottom)
+function isSolvable(tiles: number[]): boolean {
+  // Count inversions (ignore blank)
+  let inv = 0
+  for (let i = 0; i < tiles.length; i++) {
+    if (tiles[i] === EMPTY) continue
+    for (let j = i + 1; j < tiles.length; j++) {
+      if (tiles[j] === EMPTY) continue
+      if (tiles[i] > tiles[j]) inv++
+    }
   }
-  return a
+  const blankRow = Math.floor(tiles.indexOf(EMPTY) / SIZE)
+  const blankFromBottom = SIZE - blankRow   // 1-indexed from bottom
+
+  if (SIZE % 2 === 1) return inv % 2 === 0
+  if (blankFromBottom % 2 === 0) return inv % 2 === 1
+  return inv % 2 === 0
 }
 
-// A single puzzle piece — shows the correct slice of the image
-function Piece({
-  id,
-  imageUrl,
-  sizePx,
-  draggable: isDraggable,
-  onDragStart,
-}: {
-  id: number
-  imageUrl?: string
-  sizePx: number
-  draggable: boolean
-  onDragStart: () => void
-}) {
-  const col = id % COLS
-  const row = Math.floor(id / COLS)
+function generateSolvable(): number[] {
+  const arr = Array.from({ length: TOTAL }, (_, i) => i)
+  let shuffled: number[]
+  do {
+    // Fisher-Yates
+    shuffled = [...arr]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+  } while (!isSolvable(shuffled) || shuffled.every((v, i) => v === i))
+  return shuffled
+}
 
-  // Background position: shift so the right portion of the image shows
-  const bgX = -(col * sizePx)
-  const bgY = -(row * sizePx)
-  const totalW = COLS * sizePx
-  const totalH = ROWS * sizePx
+// ── Piece component ────────────────────────────────────────────────────────
+function Piece({
+  pieceId,
+  imageUrl,
+  size,
+  onClick,
+  isMovable,
+  isCorrect,
+}: {
+  pieceId: number
+  imageUrl?: string
+  size: number
+  onClick: () => void
+  isMovable: boolean
+  isCorrect: boolean
+}) {
+  const col = pieceId % SIZE
+  const row = Math.floor(pieceId / SIZE)
+  const bgX = -(col * size)
+  const bgY = -(row * size)
+  const totalPx = SIZE * size
 
   return (
     <div
-      draggable={isDraggable}
-      onDragStart={onDragStart}
+      onClick={onClick}
       style={{
-        width: sizePx,
-        height: sizePx,
+        width: size,
+        height: size,
         backgroundImage: imageUrl ? `url("${imageUrl}")` : undefined,
-        backgroundSize: `${totalW}px ${totalH}px`,
+        backgroundSize: `${totalPx}px ${totalPx}px`,
         backgroundPosition: `${bgX}px ${bgY}px`,
         backgroundRepeat: 'no-repeat',
-        backgroundColor: !imageUrl ? `hsl(${(id * 30) % 360}, 55%, 75%)` : undefined,
-        cursor: isDraggable ? 'grab' : 'default',
-        borderRadius: 4,
-        border: '2px solid rgba(255,255,255,0.6)',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+        backgroundColor: !imageUrl
+          ? `hsl(${(pieceId * 23) % 360}, 55%, 72%)`
+          : undefined,
+        cursor: isMovable ? 'pointer' : 'default',
+        borderRadius: 3,
+        border: isCorrect
+          ? '2px solid rgba(100,200,100,0.5)'
+          : '2px solid rgba(255,255,255,0.4)',
+        boxShadow: isMovable
+          ? '0 0 0 2px rgba(139,46,46,0.4), 0 2px 6px rgba(0,0,0,0.2)'
+          : '0 1px 4px rgba(0,0,0,0.15)',
+        transition: 'box-shadow 0.15s',
         userSelect: 'none',
-        flexShrink: 0,
       }}
     />
   )
 }
 
+// ── Main Game ──────────────────────────────────────────────────────────────
 export default function HeartPuzzle({ onBack, imageUrl }: Props) {
-  // board: array of TOTAL slots, each holds pieceId or null
-  const [board, setBoard] = useState<(number | null)[]>(() => Array(TOTAL).fill(null))
-  // container: list of piece IDs not yet placed
-  const [container, setContainer] = useState<number[]>(() =>
-    shuffle(Array.from({ length: TOTAL }, (_, i) => i))
+  // tiles[position] = pieceId  (EMPTY = 15 = blank)
+  const [tiles, setTiles] = useState<number[]>(() =>
+    Array.from({ length: TOTAL }, (_, i) => i)  // solved state initially
   )
+  const [moves, setMoves] = useState(0)
   const [won, setWon] = useState(false)
-  // dragging state — just a piece ID, stored in dataTransfer
-  const [dragOver, setDragOver] = useState<number | 'container' | null>(null)
+  const [started, setStarted] = useState(false)
 
-  const checkWin = (b: (number | null)[]) =>
-    b.every((v, i) => v === i)
+  const emptyPos = tiles.indexOf(EMPTY)
 
-  // Called when a piece is dropped onto board slot `slot`
-  const dropOnSlot = (slot: number, pieceId: number, fromSlot: number | null) => {
-    const newBoard = [...board]
-    const newContainer = [...container]
-
-    // Remove from source
-    if (fromSlot === null) {
-      // came from container
-      const ci = newContainer.indexOf(pieceId)
-      if (ci !== -1) newContainer.splice(ci, 1)
-    } else {
-      // came from another slot
-      const displaced = newBoard[fromSlot]
-      if (displaced !== null) newContainer.push(displaced)
-      newBoard[fromSlot] = null
-    }
-
-    // Displace anything in target slot back to container
-    if (newBoard[slot] !== null && newBoard[slot] !== pieceId) {
-      newContainer.push(newBoard[slot]!)
-    }
-
-    newBoard[slot] = pieceId
-    setBoard(newBoard)
-    setContainer(newContainer)
-
-    if (checkWin(newBoard)) setTimeout(() => setWon(true), 200)
+  // Positions adjacent to a given position
+  const adjacentTo = (pos: number): number[] => {
+    const row = Math.floor(pos / SIZE)
+    const col = pos % SIZE
+    const result: number[] = []
+    if (row > 0)        result.push(pos - SIZE)   // up
+    if (row < SIZE - 1) result.push(pos + SIZE)   // down
+    if (col > 0)        result.push(pos - 1)      // left
+    if (col < SIZE - 1) result.push(pos + 1)      // right
+    return result
   }
 
-  const dropOnContainer = (pieceId: number, fromSlot: number) => {
-    const newBoard = [...board]
-    const newContainer = [...container]
-    newBoard[fromSlot] = null
-    newContainer.push(pieceId)
-    setBoard(newBoard)
-    setContainer(newContainer)
-  }
+  const isMovable = (pos: number) => adjacentTo(pos).includes(emptyPos)
 
-  const bongkar = () => {
-    setBoard(Array(TOTAL).fill(null))
-    setContainer(shuffle(Array.from({ length: TOTAL }, (_, i) => i)))
+  const move = useCallback((pos: number) => {
+    if (!isMovable(pos) || won) return
+    const newTiles = [...tiles]
+    ;[newTiles[pos], newTiles[emptyPos]] = [newTiles[emptyPos], newTiles[pos]]
+    setTiles(newTiles)
+    setMoves(m => m + 1)
+
+    // Check win: every tile is in its correct position
+    if (newTiles.every((v, i) => v === i)) {
+      setTimeout(() => setWon(true), 150)
+    }
+  }, [tiles, emptyPos, won])
+
+  const scramble = () => {
+    setTiles(generateSolvable())
+    setMoves(0)
     setWon(false)
-    setDragOver(null)
+    setStarted(true)
   }
 
-  // Encode drag data as "pieceId,fromSlot" (fromSlot=-1 if from container)
-  const encode = (pieceId: number, fromSlot: number | null) =>
-    `${pieceId},${fromSlot ?? -1}`
-
-  const decode = (s: string): [number, number | null] => {
-    const [p, f] = s.split(',').map(Number)
-    return [p, f === -1 ? null : f]
-  }
+  const correctCount = tiles.filter((v, i) => v === i && v !== EMPTY).length
 
   return (
     <div className="space-y-4">
@@ -143,158 +154,104 @@ export default function HeartPuzzle({ onBack, imageUrl }: Props) {
         <button onClick={onBack} className="flex items-center gap-1 text-sm text-[#a06060] hover:text-[#6b2020]">
           <ArrowLeft className="w-4 h-4" /> Kembali
         </button>
-        <span className="font-playfair text-base font-bold text-[#3d0c0c]">Puzzle Hati 🧩</span>
-        <button onClick={bongkar} className="flex items-center gap-1 text-sm text-[#a06060] hover:text-[#6b2020]">
-          <RotateCcw className="w-3.5 h-3.5" /> Bongkar
+        <span className="font-playfair text-base font-bold text-[#3d0c0c]">Puzzle Geser</span>
+        <button
+          onClick={scramble}
+          className="flex items-center gap-1 text-sm font-medium text-white px-3 py-1.5 rounded-xl transition-colors"
+          style={{ background: '#8b2e2e' }}
+        >
+          <Shuffle className="w-3.5 h-3.5" /> Acak
         </button>
       </div>
+
+      {/* Stats */}
+      {started && !won && (
+        <div className="flex justify-center gap-6 text-sm text-[#a06060]">
+          <span>Langkah: <strong className="text-[#3d0c0c]">{moves}</strong></span>
+          <span>Benar: <strong className="text-[#3d0c0c]">{correctCount}/{TOTAL - 1}</strong></span>
+        </div>
+      )}
 
       {/* Win banner */}
       {won && (
         <div className="text-center py-4 rounded-2xl text-white"
           style={{ background: 'linear-gradient(135deg, #6b2020, #3d0c0c)' }}>
           <Trophy className="w-8 h-8 mx-auto mb-1 text-yellow-300" />
-          <p className="font-playfair text-xl font-bold">Puzzle Selesai! 🎉</p>
-          <button onClick={bongkar}
+          <p className="font-playfair text-xl font-bold">Selesai dalam {moves} langkah! 🎉</p>
+          <button onClick={scramble}
             className="mt-2 px-5 py-1.5 bg-white/20 rounded-full text-sm hover:bg-white/30">
             Main Lagi
           </button>
         </div>
       )}
 
-      {/* Board: COLS×ROWS grid, each cell is a drop target */}
-      <div className="flex justify-center overflow-x-auto">
+      {/* Puzzle board */}
+      <div className="flex justify-center">
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: `repeat(${COLS}, ${PIECE_PX}px)`,
-            gridTemplateRows: `repeat(${ROWS}, ${PIECE_PX}px)`,
-            gap: 0,
+            gridTemplateColumns: `repeat(${SIZE}, ${PIECE_PX}px)`,
+            gridTemplateRows:    `repeat(${SIZE}, ${PIECE_PX}px)`,
+            gap: 3,
+            padding: 8,
+            borderRadius: 16,
+            background: '#f5e8e8',
+            boxShadow: '0 4px 20px rgba(139,46,46,0.15)',
           }}
         >
-          {Array.from({ length: TOTAL }, (_, slot) => {
-            const piece = board[slot]
-            const isOver = dragOver === slot
+          {tiles.map((pieceId, pos) => {
+            if (pieceId === EMPTY) {
+              // Empty slot
+              return (
+                <div
+                  key={`empty-${pos}`}
+                  style={{
+                    width: PIECE_PX,
+                    height: PIECE_PX,
+                    borderRadius: 3,
+                    background: 'rgba(139,46,46,0.08)',
+                    border: '2px dashed rgba(139,46,46,0.2)',
+                  }}
+                />
+              )
+            }
+
+            const movable = isMovable(pos)
+            const correct = pieceId === pos
 
             return (
               <div
-                key={slot}
-                onDragOver={e => { e.preventDefault(); setDragOver(slot) }}
-                onDragLeave={() => setDragOver(null)}
-                onDrop={e => {
-                  e.preventDefault()
-                  setDragOver(null)
-                  const data = e.dataTransfer.getData('text/plain')
-                  if (!data) return
-                  const [pieceId, fromSlot] = decode(data)
-                  dropOnSlot(slot, pieceId, fromSlot)
-                }}
+                key={pieceId}
                 style={{
-                  width: PIECE_PX,
-                  height: PIECE_PX,
-                  boxSizing: 'border-box',
-                  // Guide outline when empty
-                  border: piece === null
-                    ? `1.5px dashed ${isOver ? '#8b2e2e' : 'rgba(139,46,46,0.25)'}`
-                    : 'none',
-                  borderRadius: 4,
-                  background: piece === null
-                    ? isOver ? 'rgba(139,46,46,0.08)' : 'rgba(139,46,46,0.04)'
-                    : 'transparent',
-                  position: 'relative',
-                  transition: 'border-color 0.15s, background 0.15s',
+                  transition: 'transform 0.1s ease',
+                  transform: movable ? 'scale(1.02)' : 'scale(1)',
                 }}
               >
-                {/* Slot number hint when empty */}
-                {piece === null && (
-                  <span style={{
-                    position: 'absolute', inset: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 10, color: 'rgba(139,46,46,0.2)', fontWeight: 600,
-                    pointerEvents: 'none', userSelect: 'none',
-                  }}>
-                    {slot + 1}
-                  </span>
-                )}
-
-                {/* Placed piece */}
-                {piece !== null && (
-                  <div
-                    draggable
-                    onDragStart={e => {
-                      e.dataTransfer.setData('text/plain', encode(piece, slot))
-                    }}
-                    style={{
-                      width: PIECE_PX,
-                      height: PIECE_PX,
-                      cursor: 'grab',
-                    }}
-                  >
-                    <Piece id={piece} imageUrl={imageUrl} sizePx={PIECE_PX} draggable={false} onDragStart={() => {}} />
-                  </div>
-                )}
+                <Piece
+                  pieceId={pieceId}
+                  imageUrl={imageUrl}
+                  size={PIECE_PX}
+                  onClick={() => move(pos)}
+                  isMovable={movable}
+                  isCorrect={correct}
+                />
               </div>
             )
           })}
         </div>
       </div>
 
-      {/* Progress */}
-      <p className="text-center text-xs text-[#a06060]">
-        {TOTAL - container.length}/{TOTAL} terpasang
-      </p>
-
-      {/* Container — drop zone for returning pieces */}
-      <div
-        onDragOver={e => { e.preventDefault(); setDragOver('container') }}
-        onDragLeave={() => setDragOver(null)}
-        onDrop={e => {
-          e.preventDefault()
-          setDragOver(null)
-          const data = e.dataTransfer.getData('text/plain')
-          if (!data) return
-          const [pieceId, fromSlot] = decode(data)
-          if (fromSlot !== null) dropOnContainer(pieceId, fromSlot)
-        }}
-        style={{
-          minHeight: 80,
-          background: dragOver === 'container' ? 'rgba(139,46,46,0.06)' : '#fdf6f6',
-          borderRadius: 16,
-          border: `2px dashed ${dragOver === 'container' ? '#8b2e2e' : '#c9a0a0'}`,
-          padding: 12,
-          transition: 'border-color 0.15s, background 0.15s',
-        }}
-      >
-        {container.length === 0 ? (
-          <p className="text-center text-[#c9a0a0] text-sm py-2 font-playfair">
-            {won ? '🎉 Semua terpasang!' : 'Kosong'}
-          </p>
-        ) : (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
-            {container.map(pid => (
-              <div
-                key={pid}
-                draggable
-                onDragStart={e => {
-                  e.dataTransfer.setData('text/plain', encode(pid, null))
-                }}
-              >
-                <Piece
-                  id={pid}
-                  imageUrl={imageUrl}
-                  sizePx={56}
-                  draggable={false}
-                  onDragStart={() => {}}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <p className="text-center text-xs text-[#c9a0a0]">
-        Drag potongan ke kotak yang sesuai ↑ — angka kecil di kotak = nomor piece
-      </p>
+      {/* Initial state hint */}
+      {!started && (
+        <p className="text-center text-sm text-[#a06060] font-playfair">
+          Tekan <strong>Acak</strong> untuk mulai bermain ✨
+        </p>
+      )}
+      {started && !won && (
+        <p className="text-center text-xs text-[#c9a0a0]">
+          Klik piece yang bersebelahan dengan kotak kosong untuk menggesernya
+        </p>
+      )}
     </div>
   )
 }
